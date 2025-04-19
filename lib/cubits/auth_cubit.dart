@@ -30,73 +30,148 @@ class AuthCubit extends Cubit<AuthState> {
   AuthCubit() : super(AuthState());
 
   Future<void> register(String email, String username, String password) async {
-    emit(state.copyWith(isLoading: true));
+    emit(state.copyWith(isLoading: true, error: ''));
     try {
-      UserCredential credential = await _auth.createUserWithEmailAndPassword(
+      print('Starting registration for email: $email');
+
+      // Выполняем регистрацию
+      await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
+
+      // Проверяем текущего пользователя
+      final firebaseUser = _auth.currentUser;
+      if (firebaseUser == null) {
+        print('Error: FirebaseAuth.currentUser is null');
+        throw Exception('Failed to create user');
+      }
+
+      print('User created with UID: ${firebaseUser.uid}');
+
+      // Создаем модель пользователя
       UserModel user = UserModel(
-        uid: credential.user!.uid,
+        uid: firebaseUser.uid,
         email: email,
         username: username,
+        hasCompletedQuest: false,
+        questAnswers: List.filled(5, null),
       );
+
+      print('Saving user data to Realtime Database: ${user.toMap()}');
       await _database
           .child('users')
-          .child(credential.user!.uid)
+          .child(firebaseUser.uid)
           .set(user.toMap());
+
+      print('User data saved successfully');
       emit(state.copyWith(user: user, isLoading: false));
-    } catch (e) {
-      emit(state.copyWith(error: e.toString(), isLoading: false));
+    } on FirebaseAuthException catch (e) {
+      String errorMessage;
+      switch (e.code) {
+        case 'email-already-in-use':
+          errorMessage = 'Этот email уже зарегистрирован';
+          break;
+        case 'invalid-email':
+          errorMessage = 'Некорректный email';
+          break;
+        case 'weak-password':
+          errorMessage = 'Пароль слишком слабый';
+          break;
+        default:
+          errorMessage = 'Ошибка регистрации: ${e.message}';
+      }
+      print('FirebaseAuthException: $errorMessage');
+      emit(state.copyWith(error: errorMessage, isLoading: false));
+    } catch (e, stackTrace) {
+      print('Unexpected error during registration: $e\nStackTrace: $stackTrace');
+      emit(state.copyWith(error: 'Ошибка регистрации: $e', isLoading: false));
     }
   }
 
   Future<void> login(String email, String password) async {
-    emit(state.copyWith(isLoading: true));
+    emit(state.copyWith(isLoading: true, error: ''));
     try {
-      UserCredential credential = await _auth.signInWithEmailAndPassword(
+      print('Starting login for email: $email');
+      await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
-      DataSnapshot snapshot = await _database
-          .child('users')
-          .child(credential.user!.uid)
-          .get();
 
-      // Проверяем, что snapshot.value не null и является Map
-      if (snapshot.value == null) {
-        throw Exception('User data not found');
+      final firebaseUser = _auth.currentUser;
+      if (firebaseUser == null) {
+        print('Error: FirebaseAuth.currentUser is null');
+        throw Exception('Failed to login user');
       }
 
-      // Приводим snapshot.value к Map<String, dynamic>
+      print('User logged in with UID: ${firebaseUser.uid}');
+      DataSnapshot snapshot = await _database
+          .child('users')
+          .child(firebaseUser.uid)
+          .get();
+
+      if (snapshot.value == null) {
+        print('Error: User data not found in Realtime Database');
+        throw Exception('Данные пользователя не найдены');
+      }
+
+      print('Raw snapshot value: ${snapshot.value}');
       final Map<dynamic, dynamic> rawData = snapshot.value as Map<dynamic, dynamic>;
       final Map<String, dynamic> userData = rawData.map((key, value) => MapEntry(key.toString(), value));
 
       UserModel user = UserModel.fromMap(userData);
+      print('User data loaded: ${user.email}');
       emit(state.copyWith(user: user, isLoading: false));
-    } catch (e) {
+    } on FirebaseAuthException catch (e) {
+      String errorMessage;
+      switch (e.code) {
+        case 'user-not-found':
+          errorMessage = 'Пользователь не найден';
+          break;
+        case 'wrong-password':
+          errorMessage = 'Неверный пароль';
+          break;
+        default:
+          errorMessage = 'Ошибка входа: ${e.message}';
+      }
+      print('FirebaseAuthException: $errorMessage');
+      emit(state.copyWith(error: errorMessage, isLoading: false));
+    } catch (e, stackTrace) {
+      print('Unexpected error during login: $e\nStackTrace: $stackTrace');
       emit(state.copyWith(error: e.toString(), isLoading: false));
     }
   }
 
   Future<void> saveQuestAnswer(String uid, int questionIndex, String answer) async {
-    List<String?> newAnswers = List.from(state.user?.questAnswers ?? [null, null, null, null, null]);
-    newAnswers[questionIndex] = answer;
-    await _database.child('users').child(uid).update({
-      'questAnswers': newAnswers,
-    });
-    emit(state.copyWith(
-      user: state.user?.copyWith(questAnswers: newAnswers),
-    ));
+    try {
+      print('Saving quest answer for user $uid, question $questionIndex: $answer');
+      List<String?> newAnswers = List.from(state.user?.questAnswers ?? List.filled(5, null));
+      newAnswers[questionIndex] = answer;
+      await _database.child('users').child(uid).update({
+        'questAnswers': newAnswers,
+      });
+      emit(state.copyWith(
+        user: state.user?.copyWith(questAnswers: newAnswers),
+      ));
+      print('Quest answer saved');
+    } catch (e, stackTrace) {
+      print('Error saving quest answer: $e\nStackTrace: $stackTrace');
+    }
   }
 
   Future<void> completeQuest(String uid) async {
-    await _database.child('users').child(uid).update({
-      'hasCompletedQuest': true,
-    });
-    emit(state.copyWith(
-      user: state.user?.copyWith(hasCompletedQuest: true),
-    ));
+    try {
+      print('Completing quest for user $uid');
+      await _database.child('users').child(uid).update({
+        'hasCompletedQuest': true,
+      });
+      emit(state.copyWith(
+        user: state.user?.copyWith(hasCompletedQuest: true),
+      ));
+      print('Quest completed');
+    } catch (e, stackTrace) {
+      print('Error completing quest: $e\nStackTrace: $stackTrace');
+    }
   }
 }
 

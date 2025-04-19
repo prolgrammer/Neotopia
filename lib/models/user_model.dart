@@ -24,12 +24,17 @@ class UserModel {
   }
 
   factory UserModel.fromMap(Map<String, dynamic> map) {
-    return UserModel(
-      uid: map['uid'],
-      email: map['email'],
-      username: map['username'],
-      hasCompletedQuest: map['hasCompletedQuest'] ?? false,
-      questAnswers: List<String?>.from(map['questAnswers'] ?? [null, null, null, null, null]),
-    );
+    try {
+      return UserModel(
+        uid: map['uid'] as String,
+        email: map['email'] as String,
+        username: map['username'] as String,
+        hasCompletedQuest: map['hasCompletedQuest'] as bool? ?? false,
+        questAnswers: List<String?>.from(map['questAnswers'] ?? [null, null, null, null, null]),
+      );
+    } catch (e) {
+      print('Error parsing UserModel: $e');
+      rethrow;
+    }
   }
 }

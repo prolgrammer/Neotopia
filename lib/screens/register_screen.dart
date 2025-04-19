@@ -7,8 +7,7 @@ class RegisterScreen extends StatelessWidget {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController =
-  TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -57,17 +56,19 @@ class RegisterScreen extends StatelessWidget {
                         ),
                         TextField(
                           controller: _confirmPasswordController,
-                          decoration:
-                          InputDecoration(labelText: 'Подтвердите пароль'),
+                          decoration: InputDecoration(labelText: 'Подтвердите пароль'),
                           obscureText: true,
                         ),
                         SizedBox(height: 16),
                         BlocConsumer<AuthCubit, AuthState>(
                           listener: (context, state) {
+                            print('AuthState changed: user=${state.user}, error=${state.error}, isLoading=${state.isLoading}');
                             if (state.user != null) {
+                              print('Navigating to quest screen');
                               Navigator.pushReplacementNamed(context, '/quest');
                             }
                             if (state.error.isNotEmpty) {
+                              print('Showing error: ${state.error}');
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(content: Text(state.error)),
                               );
@@ -78,48 +79,33 @@ class RegisterScreen extends StatelessWidget {
                                 ? CircularProgressIndicator()
                                 : ElevatedButton(
                               onPressed: () {
-                                String email = _emailController.text;
-                                String username = _usernameController.text;
+                                String email = _emailController.text.trim();
+                                String username = _usernameController.text.trim();
                                 String password = _passwordController.text;
-                                String confirmPassword =
-                                    _confirmPasswordController.text;
+                                String confirmPassword = _confirmPasswordController.text;
 
-                                if (email.isEmpty ||
-                                    username.isEmpty ||
-                                    password.isEmpty ||
-                                    confirmPassword.isEmpty) {
-                                  ScaffoldMessenger.of(context)
-                                      .showSnackBar(
-                                    SnackBar(
-                                        content:
-                                        Text('Заполните все поля')),
+                                print('Register button pressed: email=$email, username=$username');
+                                if (email.isEmpty || username.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Заполните все поля')),
                                   );
                                   return;
                                 }
                                 if (!EmailValidator.validate(email)) {
-                                  ScaffoldMessenger.of(context)
-                                      .showSnackBar(
-                                    SnackBar(
-                                        content:
-                                        Text('Некорректный email')),
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Некорректный email')),
                                   );
                                   return;
                                 }
                                 if (password.length < 6) {
-                                  ScaffoldMessenger.of(context)
-                                      .showSnackBar(
-                                    SnackBar(
-                                        content: Text(
-                                            'Пароль должен быть не менее 6 символов')),
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Пароль должен быть не менее 6 символов')),
                                   );
                                   return;
                                 }
                                 if (password != confirmPassword) {
-                                  ScaffoldMessenger.of(context)
-                                      .showSnackBar(
-                                    SnackBar(
-                                        content: Text(
-                                            'Пароли не совпадают')),
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Пароли не совпадают')),
                                   );
                                   return;
                                 }
@@ -135,8 +121,10 @@ class RegisterScreen extends StatelessWidget {
                           },
                         ),
                         TextButton(
-                          onPressed: () =>
-                              Navigator.pushNamed(context, '/login'),
+                          onPressed: () {
+                            print('Navigating to login screen');
+                            Navigator.pushNamed(context, '/login');
+                          },
                           child: Text('Уже есть аккаунт? Войти'),
                         ),
                       ],
