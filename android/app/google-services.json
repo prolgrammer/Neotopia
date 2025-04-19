@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "556306081042",
+    "project_id": "neotopia-ae66d",
+    "storage_bucket": "neotopia-ae66d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:556306081042:android:6789c90637a405cbccffcb",
+        "android_client_info": {
+          "package_name": "com.example.neotopia"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDKtoUbbgtzYVkKEAT5wMvID_KAtma14bk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
