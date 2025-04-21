@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import '../cubits/auth_cubit.dart';
+import 'neopedia_screen.dart';
 import 'quest_catalog_screen.dart';
+import 'neopedia_screen.dart';
 import 'dart:io';
 
 class MainScreen extends StatelessWidget {
@@ -111,7 +113,22 @@ class MainScreen extends StatelessWidget {
                           title: 'Неопедия',
                           icon: '📚',
                           onTap: () {
-                            // TODO: Навигация к Неопедии
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => NeopediaScreen()),
+                            );
+                          },
+                        ),
+                        SizedBox(height: 16),
+                        MainCard(
+                          title: 'Магазин',
+                          icon: '🛒',
+                          onTap: () {
+                            // TODO: Навигация к магазину
+                            // Navigator.push(
+                            //   context,
+                            //   MaterialPageRoute(builder: (context) => StoreScreen()),
+                            // );
                           },
                         ),
                       ],

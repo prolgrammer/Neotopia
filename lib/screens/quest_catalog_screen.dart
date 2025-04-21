@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../widgets/quest_card.dart';
 import 'quest_catalog/quiz_screen.dart';
 import 'quest_catalog/pair_match_screen.dart';
+import 'quest_catalog/puzzle_screen.dart';
 
 class QuestCatalogScreen extends StatelessWidget {
   @override
@@ -53,7 +54,10 @@ class QuestCatalogScreen extends StatelessWidget {
                 icon: '🧩',
                 description: 'Собери пазл с символикой Neoflex и получи награду!',
                 onTap: () {
-                  // TODO: Навигация к игре с пазлом
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => PuzzleScreen()),
+                  );
                 },
               ),
               SizedBox(height: 16),
