@@ -30,7 +30,7 @@ class WelcomeScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Image.asset(
-                    'assets/images/neoflex_logo.png',
+                    'assets/images/neoflex_logo.jpg',
                     height: 100,
                   ),
                   SizedBox(height: 16),

@@ -33,23 +33,18 @@ class AuthCubit extends Cubit<AuthState> {
     emit(state.copyWith(isLoading: true, error: ''));
     try {
       print('Starting registration for email: $email');
-
-      // Выполняем регистрацию
-      await _auth.createUserWithEmailAndPassword(
+      UserCredential credential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      // Проверяем текущего пользователя
-      final firebaseUser = _auth.currentUser;
+      final firebaseUser = credential.user;
       if (firebaseUser == null) {
         print('Error: FirebaseAuth.currentUser is null');
         throw Exception('Failed to create user');
       }
 
       print('User created with UID: ${firebaseUser.uid}');
-
-      // Создаем модель пользователя
       UserModel user = UserModel(
         uid: firebaseUser.uid,
         email: email,
@@ -93,12 +88,12 @@ class AuthCubit extends Cubit<AuthState> {
     emit(state.copyWith(isLoading: true, error: ''));
     try {
       print('Starting login for email: $email');
-      await _auth.signInWithEmailAndPassword(
+      UserCredential credential = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      final firebaseUser = _auth.currentUser;
+      final firebaseUser = credential.user;
       if (firebaseUser == null) {
         print('Error: FirebaseAuth.currentUser is null');
         throw Exception('Failed to login user');
@@ -110,7 +105,7 @@ class AuthCubit extends Cubit<AuthState> {
           .child(firebaseUser.uid)
           .get();
 
-      if (snapshot.value == null) {
+      if (!snapshot.exists || snapshot.value == null) {
         print('Error: User data not found in Realtime Database');
         throw Exception('Данные пользователя не найдены');
       }
@@ -145,17 +140,45 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> saveQuestAnswer(String uid, int questionIndex, String answer) async {
     try {
       print('Saving quest answer for user $uid, question $questionIndex: $answer');
-      List<String?> newAnswers = List.from(state.user?.questAnswers ?? List.filled(5, null));
+      // Получаем текущие данные пользователя из базы
+      DataSnapshot snapshot = await _database.child('users').child(uid).get();
+      List<String?> newAnswers = List.filled(5, null);
+
+      if (snapshot.exists && snapshot.value != null) {
+        final Map<dynamic, dynamic> userData = snapshot.value as Map<dynamic, dynamic>;
+        print('Raw questAnswers: ${userData['questAnswers']}');
+
+        // Проверяем, является ли questAnswers списком
+        if (userData['questAnswers'] is List) {
+          final List<dynamic> existingAnswers = userData['questAnswers'] as List<dynamic>;
+          // Копируем существующие ответы, если они есть
+          for (int i = 0; i < existingAnswers.length && i < 5; i++) {
+            newAnswers[i] = existingAnswers[i] as String?;
+          }
+        } else if (userData['questAnswers'] != null) {
+          // Если questAnswers не список (например, объект), логируем и используем пустой список
+          print('Warning: questAnswers is not a list, resetting to default: ${userData['questAnswers']}');
+        }
+      } else {
+        print('No user data found, initializing new questAnswers');
+      }
+
+      // Обновляем ответ для указанного индекса
       newAnswers[questionIndex] = answer;
+
+      // Сохраняем обновленный список в базе
       await _database.child('users').child(uid).update({
         'questAnswers': newAnswers,
       });
+
+      // Обновляем состояние
       emit(state.copyWith(
         user: state.user?.copyWith(questAnswers: newAnswers),
       ));
-      print('Quest answer saved');
+      print('Quest answer saved successfully');
     } catch (e, stackTrace) {
       print('Error saving quest answer: $e\nStackTrace: $stackTrace');
+      emit(state.copyWith(error: 'Ошибка сохранения ответа: $e'));
     }
   }
 
@@ -171,6 +194,7 @@ class AuthCubit extends Cubit<AuthState> {
       print('Quest completed');
     } catch (e, stackTrace) {
       print('Error completing quest: $e\nStackTrace: $stackTrace');
+      emit(state.copyWith(error: 'Ошибка завершения квеста: $e'));
     }
   }
 }
