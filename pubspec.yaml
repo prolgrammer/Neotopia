@@ -40,6 +40,11 @@ dependencies:
   firebase_auth: ^5.5.2
   firebase_database: ^11.3.5
   email_validator: ^2.1.17
+  image_picker: ^1.1.2
+  firebase_storage: ^12.4.5
+  flutter_svg: ^2.1.0
+  path_provider: ^2.1.5
+  google_fonts: ^6.2.1
 
 dev_dependencies:
   flutter_test:

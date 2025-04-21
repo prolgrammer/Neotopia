@@ -17,80 +17,109 @@ class LoginScreen extends StatelessWidget {
             end: Alignment.bottomRight,
           ),
         ),
-        child: Center(
-          child: SingleChildScrollView(
-            padding: EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Image.asset(
-                  'assets/images/neoflex_logo.jpg',
-                  height: 100,
-                ),
-                SizedBox(height: 16),
-                Card(
-                  elevation: 8,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: Column(
-                      children: [
-                        TextField(
-                          controller: _emailController,
-                          decoration: InputDecoration(labelText: 'Email'),
-                          keyboardType: TextInputType.emailAddress,
-                        ),
-                        TextField(
-                          controller: _passwordController,
-                          decoration: InputDecoration(labelText: 'Пароль'),
-                          obscureText: true,
-                        ),
-                        SizedBox(height: 16),
-                        BlocConsumer<AuthCubit, AuthState>(
-                          listener: (context, state) {
-                            if (state.user != null) {
-                              if (state.user!.hasCompletedQuest) {
-                                Navigator.pushReplacementNamed(
-                                    context, '/welcome');
-                              } else {
-                                Navigator.pushReplacementNamed(
-                                    context, '/quest');
-                              }
-                            }
-                            if (state.error.isNotEmpty) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(state.error)),
-                              );
-                            }
-                          },
-                          builder: (context, state) {
-                            return state.isLoading
-                                ? CircularProgressIndicator()
-                                : ElevatedButton(
-                              onPressed: () {
-                                context.read<AuthCubit>().login(
-                                  _emailController.text,
-                                  _passwordController.text,
+        child: Stack(
+          children: [
+            Positioned(
+              bottom: 16,
+              right: 16,
+              child: Image.asset(
+                'assets/images/mascot.jpg',
+                height: 100,
+              ),
+            ),
+            Center(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Image.asset(
+                      'assets/images/neoflex_logo.jpg',
+                      height: 100,
+                    ),
+                    SizedBox(height: 16),
+                    Card(
+                      elevation: 8,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: Column(
+                          children: [
+                            TextField(
+                              controller: _emailController,
+                              decoration: InputDecoration(labelText: 'Email'),
+                              keyboardType: TextInputType.emailAddress,
+                            ),
+                            TextField(
+                              controller: _passwordController,
+                              decoration: InputDecoration(labelText: 'Пароль'),
+                              obscureText: true,
+                            ),
+                            SizedBox(height: 16),
+                            BlocConsumer<AuthCubit, AuthState>(
+                              listener: (context, state) {
+                                print('AuthState changed: user=${state.user}, error=${state.error}, isLoading=${state.isLoading}');
+                                if (state.user != null) {
+                                  print('Navigating after login');
+                                  final route = state.user!.hasCompletedQuest ? '/main' : '/quest';
+                                  Navigator.pushReplacementNamed(context, route);
+                                }
+                                if (state.error.isNotEmpty) {
+                                  print('Showing error: ${state.error}');
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text(state.error)),
+                                  );
+                                }
+                              },
+                              builder: (context, state) {
+                                return ElevatedButton(
+                                  onPressed: state.isLoading
+                                      ? null
+                                      : () {
+                                    String email = _emailController.text.trim();
+                                    String password = _passwordController.text;
+
+                                    print('Login button pressed: email=$email');
+                                    if (email.isEmpty || password.isEmpty) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text('Заполните все поля')),
+                                      );
+                                      return;
+                                    }
+
+                                    context.read<AuthCubit>().login(email, password);
+                                  },
+                                  child: state.isLoading
+                                      ? SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    ),
+                                  )
+                                      : Text('Войти'),
                                 );
                               },
-                              child: Text('Войти'),
-                            );
-                          },
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                print('Navigating to register screen');
+                                Navigator.pushNamed(context, '/register');
+                              },
+                              child: Text('Нет аккаунта? Зарегистрироваться'),
+                            ),
+                          ],
                         ),
-                        TextButton(
-                          onPressed: () =>
-                              Navigator.pushNamed(context, '/register'),
-                          child: Text('Нет аккаунта? Зарегистрируйтесь'),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );

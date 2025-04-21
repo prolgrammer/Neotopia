@@ -4,6 +4,8 @@ class UserModel {
   final String username;
   final bool hasCompletedQuest;
   final List<String?> questAnswers;
+  final String? avatarUrl;
+  final int coins;
 
   UserModel({
     required this.uid,
@@ -11,6 +13,8 @@ class UserModel {
     required this.username,
     this.hasCompletedQuest = false,
     this.questAnswers = const [null, null, null, null, null],
+    this.avatarUrl,
+    this.coins = 0,
   });
 
   Map<String, dynamic> toMap() {
@@ -20,6 +24,8 @@ class UserModel {
       'username': username,
       'hasCompletedQuest': hasCompletedQuest,
       'questAnswers': questAnswers,
+      'avatarUrl': avatarUrl,
+      'coins': coins,
     };
   }
 
@@ -31,12 +37,10 @@ class UserModel {
       print('Raw questAnswers in fromMap: $questAnswersData');
 
       if (questAnswersData is List) {
-        // Если questAnswers - список
         for (int i = 0; i < questAnswersData.length && i < 5; i++) {
           questAnswers[i] = questAnswersData[i] as String?;
         }
       } else if (questAnswersData is Map) {
-        // Если questAnswers - объект (например, {0: "answer"})
         final Map<dynamic, dynamic> answersMap = questAnswersData;
         answersMap.forEach((key, value) {
           final index = int.tryParse(key.toString());
@@ -45,7 +49,6 @@ class UserModel {
           }
         });
       } else if (questAnswersData != null) {
-        // Если questAnswers - другой тип
         print('Warning: questAnswers is not a list or map: $questAnswersData');
       }
 
@@ -55,6 +58,8 @@ class UserModel {
         username: map['username'] as String,
         hasCompletedQuest: map['hasCompletedQuest'] as bool? ?? false,
         questAnswers: questAnswers,
+        avatarUrl: map['avatarUrl'] as String?,
+        coins: map['coins'] as int? ?? 0,
       );
     } catch (e) {
       print('Error parsing UserModel: $e');

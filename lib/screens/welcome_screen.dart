@@ -52,7 +52,7 @@ class WelcomeScreen extends StatelessWidget {
                   SizedBox(height: 32),
                   ElevatedButton(
                     onPressed: () {
-                      // TODO: Навигация на главную страницу с заданиями
+                      Navigator.pushReplacementNamed(context, '/main');
                     },
                     child: Text('Начать приключение'),
                   ),

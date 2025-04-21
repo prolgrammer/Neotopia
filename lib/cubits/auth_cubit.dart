@@ -1,7 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import '../models/user_model.dart';
+import 'dart:io';
 
 class AuthState {
   final UserModel? user;
@@ -51,6 +54,8 @@ class AuthCubit extends Cubit<AuthState> {
         username: username,
         hasCompletedQuest: false,
         questAnswers: List.filled(5, null),
+        avatarUrl: null,
+        coins: 0,
       );
 
       print('Saving user data to Realtime Database: ${user.toMap()}');
@@ -140,7 +145,6 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> saveQuestAnswer(String uid, int questionIndex, String answer) async {
     try {
       print('Saving quest answer for user $uid, question $questionIndex: $answer');
-      // Получаем текущие данные пользователя из базы
       DataSnapshot snapshot = await _database.child('users').child(uid).get();
       List<String?> newAnswers = List.filled(5, null);
 
@@ -148,30 +152,24 @@ class AuthCubit extends Cubit<AuthState> {
         final Map<dynamic, dynamic> userData = snapshot.value as Map<dynamic, dynamic>;
         print('Raw questAnswers: ${userData['questAnswers']}');
 
-        // Проверяем, является ли questAnswers списком
         if (userData['questAnswers'] is List) {
           final List<dynamic> existingAnswers = userData['questAnswers'] as List<dynamic>;
-          // Копируем существующие ответы, если они есть
           for (int i = 0; i < existingAnswers.length && i < 5; i++) {
             newAnswers[i] = existingAnswers[i] as String?;
           }
         } else if (userData['questAnswers'] != null) {
-          // Если questAnswers не список (например, объект), логируем и используем пустой список
           print('Warning: questAnswers is not a list, resetting to default: ${userData['questAnswers']}');
         }
       } else {
         print('No user data found, initializing new questAnswers');
       }
 
-      // Обновляем ответ для указанного индекса
       newAnswers[questionIndex] = answer;
 
-      // Сохраняем обновленный список в базе
       await _database.child('users').child(uid).update({
         'questAnswers': newAnswers,
       });
 
-      // Обновляем состояние
       emit(state.copyWith(
         user: state.user?.copyWith(questAnswers: newAnswers),
       ));
@@ -187,9 +185,13 @@ class AuthCubit extends Cubit<AuthState> {
       print('Completing quest for user $uid');
       await _database.child('users').child(uid).update({
         'hasCompletedQuest': true,
+        'coins': (state.user?.coins ?? 0) + 50,
       });
       emit(state.copyWith(
-        user: state.user?.copyWith(hasCompletedQuest: true),
+        user: state.user?.copyWith(
+          hasCompletedQuest: true,
+          coins: (state.user?.coins ?? 0) + 50,
+        ),
       ));
       print('Quest completed');
     } catch (e, stackTrace) {
@@ -197,16 +199,73 @@ class AuthCubit extends Cubit<AuthState> {
       emit(state.copyWith(error: 'Ошибка завершения квеста: $e'));
     }
   }
+
+  Future<void> uploadAvatar(XFile image) async {
+    try {
+      emit(state.copyWith(isLoading: true, error: ''));
+      final uid = state.user?.uid;
+      if (uid == null) {
+        throw Exception('User not logged in');
+      }
+
+      print('Saving avatar locally for user $uid');
+      final directory = await getApplicationDocumentsDirectory();
+      final avatarPath = '${directory.path}/avatars/$uid.jpg';
+      final avatarFile = File(avatarPath);
+
+      // Создаём директорию, если она не существует
+      await avatarFile.parent.create(recursive: true);
+      // Копируем изображение
+      await File(image.path).copy(avatarPath);
+
+      // Сохраняем путь в базе
+      await _database.child('users').child(uid).update({
+        'avatarUrl': avatarPath,
+      });
+
+      emit(state.copyWith(
+        user: state.user?.copyWith(avatarUrl: avatarPath),
+        isLoading: false,
+      ));
+      print('Avatar saved locally: $avatarPath');
+    } catch (e, stackTrace) {
+      print('Error saving avatar: $e\nStackTrace: $stackTrace');
+      emit(state.copyWith(error: 'Ошибка сохранения аватара: $e', isLoading: false));
+    }
+  }
+
+  Future<void> updateCoins(String uid, int newCoins) async {
+    try {
+      print('Updating coins for user $uid: $newCoins');
+      await _database.child('users').child(uid).update({
+        'coins': newCoins,
+      });
+      emit(state.copyWith(
+        user: state.user?.copyWith(coins: newCoins),
+      ));
+      print('Coins updated');
+    } catch (e, stackTrace) {
+      print('Error updating coins: $e\nStackTrace: $stackTrace');
+      emit(state.copyWith(error: 'Ошибка обновления монет: $e'));
+    }
+  }
 }
 
 extension on UserModel {
-  UserModel copyWith({bool? hasCompletedQuest, List<String?>? questAnswers}) {
+  UserModel copyWith({
+    bool? hasCompletedQuest,
+    List<String?>? questAnswers,
+    String? avatarUrl,
+    int? coins,
+  }) {
     return UserModel(
       uid: uid,
       email: email,
       username: username,
       hasCompletedQuest: hasCompletedQuest ?? this.hasCompletedQuest,
       questAnswers: questAnswers ?? this.questAnswers,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      coins: coins ?? this.coins,
     );
   }
 }
