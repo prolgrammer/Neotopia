@@ -6,7 +6,9 @@ import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/quest_screen.dart';
 import 'screens/welcome_screen.dart';
+import 'screens/quest_catalog_screen.dart';
 import 'cubits/auth_cubit.dart';
+import 'cubits/game_cubit.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,6 +22,9 @@ class NeoflexGame extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (context) => AuthCubit()),
+        BlocProvider(
+          create: (context) => GameCubit(authCubit: context.read<AuthCubit>()),
+        ),
       ],
       child: MaterialApp(
         title: 'Neoflex Game',
@@ -34,6 +39,7 @@ class NeoflexGame extends StatelessWidget {
           '/quest': (context) => QuestScreen(),
           '/welcome': (context) => WelcomeScreen(),
           '/main': (context) => MainScreen(),
+          '/quest_catalog': (context) => QuestCatalogScreen(),
         },
       ),
     );

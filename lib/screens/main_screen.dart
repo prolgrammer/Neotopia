@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import '../cubits/auth_cubit.dart';
+import 'quest_catalog_screen.dart';
 import 'dart:io';
 
-class MainScreen extends StatelessWidget { //TODO сделать изменяемым ник + добавить иконку N
+class MainScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -102,7 +103,7 @@ class MainScreen extends StatelessWidget { //TODO сделать изменяе�
                           title: 'Каталог игр',
                           icon: '🎮',
                           onTap: () {
-                            // TODO: Навигация к каталогу игр
+                            Navigator.pushNamed(context, '/quest_catalog');
                           },
                         ),
                         SizedBox(height: 16),
