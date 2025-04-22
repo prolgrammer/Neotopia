@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:math';
-import '../../cubits/game_cubit.dart';
+import '../../../cubits/game_cubit.dart';
 
 class PairMatchScreen extends StatefulWidget {
   @override

@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/user_model.dart';
+import '../models/daily_task_progress_model.dart';
 import 'dart:io';
 
 class AuthState {
@@ -265,6 +266,60 @@ class AuthCubit extends Cubit<AuthState> {
     } catch (e, stackTrace) {
       print('Error adding purchase: $e\nStackTrace: $stackTrace');
       emit(state.copyWith(error: 'Ошибка добавления покупки: $e'));
+    }
+  }
+
+  Future<void> completeDailyTask(String uid, String taskId, String date, int rewardCoins) async {
+    try {
+      print('Completing daily task $taskId for user $uid on date $date');
+      final taskProgress = DailyTaskProgress(
+        taskId: taskId,
+        date: date,
+        isCompleted: true,
+      );
+
+      await _database
+          .child('users')
+          .child(uid)
+          .child('daily_tasks_progress')
+          .child(date)
+          .child(taskId)
+          .set(taskProgress.toMap());
+
+      final newCoins = (state.user?.coins ?? 0) + rewardCoins;
+      await _database.child('users').child(uid).update({
+        'coins': newCoins,
+      });
+
+      emit(state.copyWith(
+        user: state.user?.copyWith(coins: newCoins),
+      ));
+      print('Daily task $taskId completed, $rewardCoins coins added');
+    } catch (e, stackTrace) {
+      print('Error completing daily task: $e\nStackTrace: $stackTrace');
+      emit(state.copyWith(error: 'Ошибка завершения задания: $e'));
+    }
+  }
+
+  Future<bool> isDailyTaskCompleted(String uid, String taskId, String date) async {
+    try {
+      final snapshot = await _database
+          .child('users')
+          .child(uid)
+          .child('daily_tasks_progress')
+          .child(date)
+          .child(taskId)
+          .get();
+
+      if (snapshot.exists && snapshot.value != null) {
+        final data = snapshot.value as Map<dynamic, dynamic>;
+        final progress = DailyTaskProgress.fromMap(Map<String, dynamic>.from(data));
+        return progress.isCompleted;
+      }
+      return false;
+    } catch (e) {
+      print('Error checking daily task completion: $e');
+      return false;
     }
   }
 }

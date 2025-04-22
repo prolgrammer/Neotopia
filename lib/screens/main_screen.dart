@@ -3,8 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:neotopia/screens/store_screen.dart';
 import '../cubits/auth_cubit.dart';
-import 'neopedia_screen.dart';
-import 'quest_catalog_screen.dart';
+import 'daily_task_screen.dart';
 import 'neopedia_screen.dart';
 import 'dart:io';
 
@@ -98,7 +97,10 @@ class MainScreen extends StatelessWidget {
                           title: 'Ежедневные задания',
                           icon: '📋',
                           onTap: () {
-                            // TODO: Навигация к ежедневным заданиям
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => DailyTasksScreen()),
+                            );
                           },
                         ),
                         SizedBox(height: 16),

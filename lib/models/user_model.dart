@@ -9,6 +9,7 @@ class UserModel {
   final String? avatarUrl;
   final int coins;
   final List<Purchase>? purchases;
+  final Map<String, List<String>> dailyTasksProgress; // Хранит выполненные задания по датам
 
   UserModel({
     required this.uid,
@@ -19,6 +20,7 @@ class UserModel {
     this.avatarUrl,
     this.coins = 0,
     this.purchases,
+    this.dailyTasksProgress = const {},
   });
 
   Map<String, dynamic> toMap() {
@@ -31,6 +33,7 @@ class UserModel {
       'avatarUrl': avatarUrl,
       'coins': coins,
       'purchases': purchases?.map((purchase) => purchase.toMap()).toList(),
+      'dailyTasksProgress': dailyTasksProgress,
     };
   }
 
@@ -38,8 +41,6 @@ class UserModel {
     try {
       List<String?> questAnswers = List<String?>.filled(5, null);
       final questAnswersData = map['questAnswers'];
-
-      print('Raw questAnswers in fromMap: $questAnswersData');
 
       if (questAnswersData is List) {
         for (int i = 0; i < questAnswersData.length && i < 5; i++) {
@@ -53,8 +54,6 @@ class UserModel {
             questAnswers[index] = value as String?;
           }
         });
-      } else if (questAnswersData != null) {
-        print('Warning: questAnswers is not a list or map: $questAnswersData');
       }
 
       List<Purchase>? purchases;
@@ -69,6 +68,15 @@ class UserModel {
             .toList();
       }
 
+      Map<String, List<String>> dailyTasksProgress = {};
+      final dailyTasksProgressData = map['dailyTasksProgress'];
+      if (dailyTasksProgressData is Map) {
+        dailyTasksProgress = dailyTasksProgressData.map((key, value) => MapEntry(
+          key.toString(),
+          (value is List) ? value.cast<String>() : [],
+        ));
+      }
+
       return UserModel(
         uid: map['uid'] as String,
         email: map['email'] as String,
@@ -78,6 +86,7 @@ class UserModel {
         avatarUrl: map['avatarUrl'] as String?,
         coins: map['coins'] as int? ?? 0,
         purchases: purchases,
+        dailyTasksProgress: dailyTasksProgress,
       );
     } catch (e) {
       print('Error parsing UserModel: $e');

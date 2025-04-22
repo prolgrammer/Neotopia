@@ -34,7 +34,7 @@ class LoginScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Image.asset(
-                      'assets/images/neoflex_logo.jpg',
+                      'assets/images/neoflex_logo.png',
                       height: 100,
                     ),
                     SizedBox(height: 16),

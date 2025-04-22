@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:neotopia/screens/quest_catalog/adventure_map_screen.dart';
+import 'package:neotopia/screens/quest_catalog/adventure/adventure_map_screen.dart';
 import '../widgets/quest_card.dart';
-import 'quest_catalog/neo_coder_screen.dart';
-import 'quest_catalog/quiz_screen.dart';
-import 'quest_catalog/pair_match_screen.dart';
-import 'quest_catalog/puzzle_screen.dart';
+import 'quest_catalog/neo_coder/neo_coder_screen.dart';
+import 'quest_catalog/quiz/quiz_screen.dart';
+import 'quest_catalog/pair_match/pair_match_screen.dart';
+import 'quest_catalog/puzzle/puzzle_screen.dart';
 
 class QuestCatalogScreen extends StatelessWidget {
   @override
