@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/quest_card.dart';
+import 'neo_coder_screen.dart';
 import 'quest_catalog/quiz_screen.dart';
 import 'quest_catalog/pair_match_screen.dart';
 import 'quest_catalog/puzzle_screen.dart';
@@ -75,7 +76,10 @@ class QuestCatalogScreen extends StatelessWidget {
                 icon: '💻',
                 description: 'Реши логические задачи и стань мастером кода!',
                 onTap: () {
-                  // TODO: Навигация к игре Нео-Кодер
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => NeoCoderScreen()),
+                  );
                 },
               ),
             ],
