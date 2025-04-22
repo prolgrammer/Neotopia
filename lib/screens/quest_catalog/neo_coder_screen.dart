@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../cubits/game_cubit.dart';
+import '../../../cubits/game_cubit.dart';
 
 class NeoCoderScreen extends StatefulWidget {
   @override

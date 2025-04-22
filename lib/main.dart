@@ -9,6 +9,7 @@ import 'screens/register_screen.dart';
 import 'screens/quest_screen.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/quest_catalog_screen.dart';
+import 'screens/quest_catalog/adventure_map_screen.dart';
 import 'cubits/auth_cubit.dart';
 import 'cubits/game_cubit.dart';
 
@@ -44,6 +45,7 @@ class NeoflexGame extends StatelessWidget {
           '/quest_catalog': (context) => QuestCatalogScreen(),
           '/neopedia': (context) => NeopediaScreen(),
           '/store': (context) => StoreScreen(),
+          '/adventure_map': (context) => AdventureMapScreen(),
         },
       ),
     );
