@@ -56,6 +56,7 @@ class AuthCubit extends Cubit<AuthState> {
         questAnswers: List.filled(5, null),
         avatarUrl: null,
         coins: 0,
+        purchases: [],
       );
 
       print('Saving user data to Realtime Database: ${user.toMap()}');
@@ -213,12 +214,9 @@ class AuthCubit extends Cubit<AuthState> {
       final avatarPath = '${directory.path}/avatars/$uid.jpg';
       final avatarFile = File(avatarPath);
 
-      // Создаём директорию, если она не существует
       await avatarFile.parent.create(recursive: true);
-      // Копируем изображение
       await File(image.path).copy(avatarPath);
 
-      // Сохраняем путь в базе
       await _database.child('users').child(uid).update({
         'avatarUrl': avatarPath,
       });
@@ -249,6 +247,26 @@ class AuthCubit extends Cubit<AuthState> {
       emit(state.copyWith(error: 'Ошибка обновления монет: $e'));
     }
   }
+
+  Future<void> addPurchase(String uid, Purchase purchase) async {
+    try {
+      print('Adding purchase for user $uid: ${purchase.id}');
+      final currentPurchases = state.user?.purchases ?? [];
+      final updatedPurchases = [...currentPurchases, purchase];
+
+      await _database.child('users').child(uid).update({
+        'purchases': updatedPurchases.map((p) => p.toMap()).toList(),
+      });
+
+      emit(state.copyWith(
+        user: state.user?.copyWith(purchases: updatedPurchases),
+      ));
+      print('Purchase added');
+    } catch (e, stackTrace) {
+      print('Error adding purchase: $e\nStackTrace: $stackTrace');
+      emit(state.copyWith(error: 'Ошибка добавления покупки: $e'));
+    }
+  }
 }
 
 extension on UserModel {
@@ -257,6 +275,7 @@ extension on UserModel {
     List<String?>? questAnswers,
     String? avatarUrl,
     int? coins,
+    List<Purchase>? purchases,
   }) {
     return UserModel(
       uid: uid,
@@ -266,6 +285,7 @@ extension on UserModel {
       questAnswers: questAnswers ?? this.questAnswers,
       avatarUrl: avatarUrl ?? this.avatarUrl,
       coins: coins ?? this.coins,
+      purchases: purchases ?? this.purchases,
     );
   }
 }

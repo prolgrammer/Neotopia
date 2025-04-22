@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:neotopia/screens/store_screen.dart';
 import '../cubits/auth_cubit.dart';
 import 'neopedia_screen.dart';
 import 'quest_catalog_screen.dart';
@@ -124,11 +125,10 @@ class MainScreen extends StatelessWidget {
                           title: 'Магазин',
                           icon: '🛒',
                           onTap: () {
-                            // TODO: Навигация к магазину
-                            // Navigator.push(
-                            //   context,
-                            //   MaterialPageRoute(builder: (context) => StoreScreen()),
-                            // );
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => StoreScreen()),
+                            );
                           },
                         ),
                       ],

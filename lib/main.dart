@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:neotopia/screens/main_screen.dart';
 import 'package:neotopia/screens/neopedia_screen.dart';
+import 'package:neotopia/screens/store_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/quest_screen.dart';
@@ -42,6 +43,7 @@ class NeoflexGame extends StatelessWidget {
           '/main': (context) => MainScreen(),
           '/quest_catalog': (context) => QuestCatalogScreen(),
           '/neopedia': (context) => NeopediaScreen(),
+          '/store': (context) => StoreScreen(),
         },
       ),
     );

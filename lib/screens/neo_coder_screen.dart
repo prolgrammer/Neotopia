@@ -97,11 +97,92 @@ _scale = Tween<double>(begin: 1, end: /* TODO */).animate(
 
   void _checkCode() {
     final code = _codeController.text.trim();
+    List<String> errors = [];
+
+    // Split code into lines for precise validation
+    final lines = code.split('\n').map((line) => line.trim()).toList();
+
+    // Expected structure
+    const rotationLine1 = r'_rotation = Tween<double>\(begin: 0, end: ([-]?\s*\d*\.?\d*\s*\*?\s*\d*\.?\d*|[0-9.-]+)\)\.animate\(';
+    const rotationLine2 = r'CurvedAnimation\(parent: _controller, curve: Curves\.easeInOut\),';
+    const scaleLine1 = r'_scale = Tween<double>\(begin: 1, end: ([-]?\d*\.?\d*)\)\.animate\(';
+    const scaleLine2 = r'CurvedAnimation\(parent: _controller, curve: Curves\.easeInOut\),';
+
+    // Validate line count
+    if (lines.length != 6) {
+      errors.add('Код должен содержать ровно 6 строк (3 для _rotation, 3 для _scale).');
+    } else {
+      // Validate _rotation
+      if (!RegExp(rotationLine1).hasMatch(lines[0])) {
+        if (!lines[0].contains('begin: 0')) {
+          errors.add('Не изменяйте begin: 0 в _rotation.');
+        }
+        if (!lines[0].contains('Tween<double>')) {
+          errors.add('Не изменяйте Tween<double> в _rotation.');
+        }
+        if (!lines[0].contains('.animate(')) {
+          errors.add('Не удаляйте .animate( в _rotation.');
+        }
+      }
+      if (!RegExp(rotationLine2).hasMatch(lines[1])) {
+        if (!lines[1].contains('CurvedAnimation')) {
+          errors.add('Не изменяйте CurvedAnimation в _rotation.');
+        }
+        if (!lines[1].contains('parent: _controller')) {
+          errors.add('Не изменяйте parent: _controller в _rotation.');
+        }
+        if (!lines[1].contains('curve: Curves.easeInOut')) {
+          errors.add('curve в _rotation должен быть правильной кривой анимации.');
+        }
+      }
+      if (!lines[2].contains(');')) {
+        errors.add('Не удаляйте ); в конце _rotation.');
+      }
+
+      // Validate _scale
+      if (!RegExp(scaleLine1).hasMatch(lines[3])) {
+        if (!lines[3].contains('begin: 1')) {
+          errors.add('Не изменяйте begin: 1 в _scale.');
+        }
+        if (!lines[3].contains('Tween<double>')) {
+          errors.add('Не изменяйте Tween<double> в _scale.');
+        }
+        if (!lines[3].contains('.animate(')) {
+          errors.add('Не удаляйте .animate( в _scale.');
+        }
+      }
+      if (!RegExp(scaleLine2).hasMatch(lines[4])) {
+        if (!lines[4].contains('CurvedAnimation')) {
+          errors.add('Не изменяйте CurvedAnimation в _scale.');
+        }
+        if (!lines[4].contains('parent: _controller')) {
+          errors.add('Не изменяйте parent: _controller в _scale.');
+        }
+        if (!lines[4].contains('curve: Curves.easeInOut')) {
+          errors.add('curve в _scale должен быть правильной кривой анимации.');
+        }
+      }
+      if (!lines[5].contains(');')) {
+        errors.add('Не удаляйте ); в конце _scale.');
+      }
+    }
+
+    // If there are syntax errors, show them and skip animation
+    if (errors.isNotEmpty) {
+      setState(() {
+        hasChecked = true;
+        errorMessage = 'Ошибка в коде:\n- ${errors.join('\n- ')}';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMessage)),
+        );
+      });
+      return;
+    }
+
     // Parse end values for rotation and scale
-    final rotationMatch = RegExp(r'_rotation\s*=\s*Tween<double>\s*\(\s*begin:\s*0\s*,\s*end:\s*([-]?\s*\d*\.?\d*\s*\*?\s*\d*\.?\d*)\s*\)').firstMatch(code);
-    final scaleMatch = RegExp(r'_scale\s*=\s*Tween<double>\s*\(\s*begin:\s*1\s*,\s*end:\s*([-]?\d*\.?\d*)\s*\)').firstMatch(code);
-    final curveCorrect = code.contains(RegExp(r'CurvedAnimation\s*\(\s*parent:\s*_controller\s*,\s*curve:\s*Curves\.easeInOut\s*\)')) &&
-        (code.split('CurvedAnimation').length - 1) >= 2;
+    final rotationMatch = RegExp(r'end: ([-]?\s*\d*\.?\d*\s*\*?\s*\d*\.?\d*|[0-9.-]+)').firstMatch(lines[0]);
+    final scaleMatch = RegExp(r'end: ([-]?\d*\.?\d*)').firstMatch(lines[3]);
+    final curveCorrect = lines[1].contains('Curves.easeInOut') && lines[4].contains('Curves.easeInOut');
 
     double rotationEnd = 0;
     double scaleEnd = 1;
@@ -136,10 +217,10 @@ _scale = Tween<double>(begin: 1, end: /* TODO */).animate(
       );
 
       hasChecked = true;
-      // Check if rotation is a multiple of 2π (360°) and scale is 1.5
+      // Check if rotation is a non-zero multiple of 2π (360°) and scale is 1.5
       final twoPi = 2 * 3.14159;
-      final rotationNormalized = (rotationEnd / twoPi).abs();
-      final isRotationCorrect = (rotationNormalized - rotationNormalized.roundToDouble()).abs() < 0.001;
+      final rotationNormalized = rotationEnd.abs() / twoPi;
+      final isRotationCorrect = rotationEnd != 0 && (rotationNormalized - rotationNormalized.roundToDouble()).abs() < 0.001;
       isCorrect = curveCorrect && isRotationCorrect && (scaleEnd - 1.5).abs() < 0.001;
 
       _animationController.reset();
@@ -282,16 +363,9 @@ _scale = Tween<double>(begin: 1, end: /* TODO */).animate(
                         children: [
                           Row(
                             children: [
-                              Image.asset(
-                                'assets/images/mascot.jpg',
-                                width: 40,
-                                height: 40,
-                                fit: BoxFit.contain,
-                              ),
-                              SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  'Помоги маскоту Neoflex ожить! Дополни код, чтобы при нажатии кнопки маскот вращался ровно на 360 градусов и увеличивался в 1.5 раза. Для 360° используй 2 * 3.14159 или ~6.28318. Подсказка: вращение в радианах, используй Curves.easeInOut.',
+                                  'Помоги маскоту Neoflex ожить! Дополни код, заменив /* TODO */ на правильные значения, чтобы маскот вращался ровно на 360 градусов и увеличивался в 1.5 раза. Для 360° используй 2 * 3.14159 или ~6.28318. Подсказка: вращение в радианах, выбери подходящую кривую анимации. Не изменяй другие части кода!',
                                   style: TextStyle(fontSize: 16),
                                 ),
                               ),
