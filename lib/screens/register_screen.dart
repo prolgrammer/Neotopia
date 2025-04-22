@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:email_validator/email_validator.dart';
 import '../cubits/auth_cubit.dart';
+import 'constants.dart';
 
 class RegisterScreen extends StatelessWidget {
   final TextEditingController _emailController = TextEditingController();
@@ -13,13 +14,7 @@ class RegisterScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.purple.shade300, Colors.purple.shade700],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
+        decoration: BoxDecoration(gradient: kAppGradient),
         child: Center(
           child: SingleChildScrollView(
             padding: EdgeInsets.all(16.0),
@@ -61,11 +56,15 @@ class RegisterScreen extends StatelessWidget {
                         ),
                         SizedBox(height: 16),
                         BlocConsumer<AuthCubit, AuthState>(
+                          listenWhen: (previous, current) =>
+                          previous.user == null && current.user != null && current.isLoading == false,
                           listener: (context, state) {
                             print('AuthState changed: user=${state.user}, error=${state.error}, isLoading=${state.isLoading}');
                             if (state.user != null) {
-                              print('Navigating to quest screen');
-                              Navigator.pushReplacementNamed(context, '/quest');
+                              print('Navigating to quest screen after delay');
+                              Future.delayed(Duration(milliseconds: 500), () {
+                                Navigator.pushReplacementNamed(context, '/quest');
+                              });
                             }
                             if (state.error.isNotEmpty) {
                               print('Showing error: ${state.error}');

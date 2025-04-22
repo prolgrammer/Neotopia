@@ -66,6 +66,12 @@ class AuthCubit extends Cubit<AuthState> {
           .child(firebaseUser.uid)
           .set(user.toMap());
 
+      // Проверка, что данные сохранены
+      DataSnapshot snapshot = await _database.child('users').child(firebaseUser.uid).get();
+      if (!snapshot.exists) {
+        throw Exception('Failed to save user data');
+      }
+
       print('User data saved successfully');
       emit(state.copyWith(user: user, isLoading: false));
     } on FirebaseAuthException catch (e) {
@@ -123,7 +129,13 @@ class AuthCubit extends Cubit<AuthState> {
 
       UserModel user = UserModel.fromMap(userData);
       print('User data loaded: ${user.email}');
-      emit(state.copyWith(user: user, isLoading: false));
+      // Проверяем, не является ли это автоматическим логином после регистрации
+      if (state.user == null || state.user!.uid != user.uid) {
+        emit(state.copyWith(user: user, isLoading: false));
+      } else {
+        print('Skipping emit: User already authenticated');
+        emit(state.copyWith(isLoading: false));
+      }
     } on FirebaseAuthException catch (e) {
       String errorMessage;
       switch (e.code) {
@@ -147,20 +159,17 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> saveQuestAnswer(String uid, int questionIndex, String answer) async {
     try {
       print('Saving quest answer for user $uid, question $questionIndex: $answer');
+      // Загружаем текущие данные пользователя из базы
       DataSnapshot snapshot = await _database.child('users').child(uid).get();
       List<String?> newAnswers = List.filled(5, null);
 
       if (snapshot.exists && snapshot.value != null) {
         final Map<dynamic, dynamic> userData = snapshot.value as Map<dynamic, dynamic>;
-        print('Raw questAnswers: ${userData['questAnswers']}');
-
         if (userData['questAnswers'] is List) {
           final List<dynamic> existingAnswers = userData['questAnswers'] as List<dynamic>;
           for (int i = 0; i < existingAnswers.length && i < 5; i++) {
             newAnswers[i] = existingAnswers[i] as String?;
           }
-        } else if (userData['questAnswers'] != null) {
-          print('Warning: questAnswers is not a list, resetting to default: ${userData['questAnswers']}');
         }
       } else {
         print('No user data found, initializing new questAnswers');
@@ -168,17 +177,14 @@ class AuthCubit extends Cubit<AuthState> {
 
       newAnswers[questionIndex] = answer;
 
+      print('Updating questAnswers in database: $newAnswers');
       await _database.child('users').child(uid).update({
         'questAnswers': newAnswers,
       });
 
-      emit(state.copyWith(
-        user: state.user?.copyWith(questAnswers: newAnswers),
-      ));
       print('Quest answer saved successfully');
     } catch (e, stackTrace) {
       print('Error saving quest answer: $e\nStackTrace: $stackTrace');
-      emit(state.copyWith(error: 'Ошибка сохранения ответа: $e'));
     }
   }
 

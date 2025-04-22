@@ -25,9 +25,10 @@ class QuestState {
 }
 
 class QuestCubit extends Cubit<QuestState> {
-  QuestCubit() : super(QuestState());
+  QuestCubit({int initialIndex = 0}) : super(QuestState(currentQuestionIndex: initialIndex));
 
   void answerQuestion(String answer, {required Function(int, String) onSave}) {
+    print('QuestCubit: Saving answer for question ${state.currentQuestionIndex}: $answer');
     List<String?> newAnswers = List.from(state.answers);
     newAnswers[state.currentQuestionIndex] = answer;
     int nextIndex = state.currentQuestionIndex + 1;

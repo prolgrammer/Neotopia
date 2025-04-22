@@ -2,8 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../cubits/auth_cubit.dart';
 import '../cubits/quest_cubit.dart';
+import 'package:firebase_database/firebase_database.dart';
 
-class QuestScreen extends StatelessWidget {
+import 'constants.dart';
+
+class QuestScreen extends StatefulWidget {
+  @override
+  _QuestScreenState createState() => _QuestScreenState();
+}
+
+class _QuestScreenState extends State<QuestScreen> {
   final List<Map<String, dynamic>> questions = [
     {
       'question': 'Как вас зовут?',
@@ -40,59 +48,95 @@ class QuestScreen extends StatelessWidget {
     },
   ];
 
+  int _initialQuestionIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Загружаем начальный индекс из базы
+    _loadInitialQuestionIndex();
+  }
+
+  Future<void> _loadInitialQuestionIndex() async {
+    final authCubit = context.read<AuthCubit>();
+    final user = authCubit.state.user;
+    if (user != null) {
+      try {
+        final snapshot = await FirebaseDatabase.instance
+            .ref()
+            .child('users')
+            .child(user.uid)
+            .child('questAnswers')
+            .get();
+        if (snapshot.exists && snapshot.value is List) {
+          final answers = (snapshot.value as List).cast<String?>();
+          _initialQuestionIndex = answers.indexWhere((answer) => answer == null);
+          if (_initialQuestionIndex == -1) _initialQuestionIndex = answers.length - 1;
+          print('Initial question index loaded from database: $_initialQuestionIndex, answers: $answers');
+          setState(() {});
+        }
+      } catch (e) {
+        print('Error loading initial question index: $e');
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => QuestCubit(),
+      create: (context) => QuestCubit(initialIndex: _initialQuestionIndex),
       child: Scaffold(
-        body: Stack(
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.purple.shade300, Colors.purple.shade700],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: 16,
-              right: 16,
-              child: Image.asset(
-                'assets/images/mascot.jpg',
+        body: Container(
+          decoration: BoxDecoration(gradient: kAppGradient),
+          child: Column(
+            children: [
+              SizedBox(height: 16),
+              Image.asset(
+                'assets/images/neoflex_logo.png',
                 height: 100,
               ),
-            ),
-            BlocConsumer<QuestCubit, QuestState>(
-              listener: (context, state) {
-                if (state.isCompleted) {
-                  context
-                      .read<AuthCubit>()
-                      .completeQuest(context.read<AuthCubit>().state.user!.uid);
-                  Navigator.pushReplacementNamed(context, '/welcome');
-                }
-              },
-              builder: (context, state) {
-                return QuestionPageView(
-                  questions: questions,
-                  currentIndex: state.currentQuestionIndex,
-                  onAnswer: (answer, index) {
-                    context.read<QuestCubit>().answerQuestion(
-                      answer,
-                      onSave: (index, answer) {
-                        context.read<AuthCubit>().saveQuestAnswer(
-                          context.read<AuthCubit>().state.user!.uid,
-                          index,
-                          answer,
-                        );
-                      },
-                    );
+              Expanded(
+                child: BlocListener<QuestCubit, QuestState>(
+                  listenWhen: (previous, current) =>
+                  previous.currentQuestionIndex != current.currentQuestionIndex ||
+                      current.isCompleted,
+                  listener: (context, state) {
+                    print('QuestCubit state changed: index=${state.currentQuestionIndex}, isCompleted=${state.isCompleted}, answers=${state.answers}');
+                    if (state.isCompleted) {
+                      print('Quest completed, navigating to welcome screen');
+                      context
+                          .read<AuthCubit>()
+                          .completeQuest(context.read<AuthCubit>().state.user!.uid);
+                      Navigator.pushReplacementNamed(context, '/welcome');
+                    }
                   },
-                );
-              },
-            ),
-          ],
+                  child: Builder(
+                    builder: (context) {
+                      final state = context.watch<QuestCubit>().state;
+                      print('Building QuestionPageView with index=${state.currentQuestionIndex}');
+                      return QuestionPageView(
+                        questions: questions,
+                        currentIndex: state.currentQuestionIndex,
+                        onAnswer: (answer, index) {
+                          print('Answer submitted for question $index: $answer');
+                          context.read<QuestCubit>().answerQuestion(
+                            answer,
+                            onSave: (index, answer) {
+                              context.read<AuthCubit>().saveQuestAnswer(
+                                context.read<AuthCubit>().state.user!.uid,
+                                index,
+                                answer,
+                              );
+                            },
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -120,28 +164,33 @@ class _QuestionPageViewState extends State<QuestionPageView> {
   @override
   void initState() {
     super.initState();
+    print('Initializing QuestionPageView with initial index=${widget.currentIndex}');
     _pageController = PageController(initialPage: widget.currentIndex);
   }
 
   @override
   void dispose() {
+    print('Disposing QuestionPageView');
     _pageController.dispose();
     super.dispose();
   }
 
   void _onAnswer(String answer, int index) async {
-    // Вызываем onAnswer для сохранения ответа
+    print('Handling answer for question $index: $answer');
     widget.onAnswer(answer, index);
-    // Ждем завершения анимации
-    await _pageController.animateToPage(
-      widget.currentIndex + 1,
-      duration: Duration(milliseconds: 500),
-      curve: Curves.easeIn,
-    );
+    if (index < widget.questions.length - 1) {
+      print('Animating to next question: ${index + 1}');
+      await _pageController.animateToPage(
+        index + 1,
+        duration: Duration(milliseconds: 500),
+        curve: Curves.easeIn,
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    print('Building PageView with currentIndex=${widget.currentIndex}');
     return PageView.builder(
       controller: _pageController,
       physics: NeverScrollableScrollPhysics(),
@@ -206,7 +255,7 @@ class _QuestionPageState extends State<QuestionPage> {
                 LinearProgressIndicator(
                   value: widget.progress,
                   backgroundColor: Colors.grey.shade300,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.purple),
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFDE683C)),
                 ),
                 SizedBox(height: 16),
                 Text(
@@ -254,15 +303,21 @@ class _QuestionPageState extends State<QuestionPage> {
                 ElevatedButton(
                   onPressed: _selectedAnswer != null && _selectedAnswer!.isNotEmpty
                       ? () {
+                    print('Submitting answer for question ${widget.index}: $_selectedAnswer');
                     widget.onAnswer(_selectedAnswer!);
                     setState(() {
                       _selectedAnswer = null;
                       _controller.clear();
                     });
-                    // Скрываем клавиатуру
                     FocusScope.of(context).unfocus();
                   }
                       : null,
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.white, backgroundColor: Color(0xFF2E0352),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                   child: Text('Далее'),
                 ),
               ],
