@@ -261,14 +261,28 @@ class AuthCubit extends Cubit<AuthState> {
       final currentPurchases = state.user?.purchases ?? [];
       final updatedPurchases = [...currentPurchases, purchase];
 
+      // Сериализуем покупку
+      final purchaseMap = purchase.toMap();
+      print('Purchase data to save: $purchaseMap');
+
+      // Сохраняем покупки в базе
       await _database.child('users').child(uid).update({
         'purchases': updatedPurchases.map((p) => p.toMap()).toList(),
       });
 
+      // Проверяем, что данные сохранены
+      final snapshot = await _database.child('users').child(uid).child('purchases').get();
+      if (snapshot.exists) {
+        print('Purchases in database: ${snapshot.value}');
+      } else {
+        print('No purchases found in database after saving');
+      }
+
+      // Обновляем локальное состояние
       emit(state.copyWith(
         user: state.user?.copyWith(purchases: updatedPurchases),
       ));
-      print('Purchase added');
+      print('Purchase added to state');
     } catch (e, stackTrace) {
       print('Error adding purchase: $e\nStackTrace: $stackTrace');
       emit(state.copyWith(error: 'Ошибка добавления покупки: $e'));

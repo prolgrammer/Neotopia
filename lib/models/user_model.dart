@@ -9,7 +9,7 @@ class UserModel {
   final String? avatarUrl;
   final int coins;
   final List<Purchase>? purchases;
-  final Map<String, List<String>> dailyTasksProgress; // Хранит выполненные задания по датам
+  final Map<String, List<String>> dailyTasksProgress;
 
   UserModel({
     required this.uid,
@@ -58,14 +58,16 @@ class UserModel {
 
       List<Purchase>? purchases;
       final purchasesData = map['purchases'];
-      if (purchasesData is List) {
+      if (purchasesData is List && purchasesData.isNotEmpty) {
         purchases = purchasesData
             .map((purchase) => Purchase.fromMap(Map<String, dynamic>.from(purchase)))
             .toList();
-      } else if (purchasesData is Map) {
+      } else if (purchasesData is Map && purchasesData.isNotEmpty) {
         purchases = purchasesData.entries
             .map((entry) => Purchase.fromMap(Map<String, dynamic>.from(entry.value)))
             .toList();
+      } else {
+        purchases = [];
       }
 
       Map<String, List<String>> dailyTasksProgress = {};

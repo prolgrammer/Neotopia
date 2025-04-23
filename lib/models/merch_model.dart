@@ -22,10 +22,18 @@ class MerchItem {
 
   factory MerchItem.fromMap(Map<String, dynamic> map) {
     return MerchItem(
-      id: map['id'],
-      name: map['name'],
-      price: map['price'],
-      imageUrl: map['imageUrl'],
+      id: map['id'] as String,
+      name: map['name'] as String,
+      price: map['price'] as int,
+      imageUrl: map['imageUrl'] as String,
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+          other is MerchItem && runtimeType == other.runtimeType && id == other.id;
+
+  @override
+  int get hashCode => id.hashCode;
 }
