@@ -183,14 +183,16 @@ class MainCard extends StatelessWidget {
             children: [
               Container(
                 width: 80,
-                color: Colors.white, // Новый цвет для боковой полосы
-                // Альтернатива: color: Colors.white, // Для белого фона
+                color: Colors.white,
                 child: Center(
-                  child: Image.asset(
-                    imagePath,
-                    height: 40,
-                    width: 40,
-                    fit: BoxFit.contain,
+                  child: Transform.translate(
+                    offset: Offset(2, 0), // Измените значение Offset(x, y) для смещения иконки (x - вправо, y - вниз)
+                    child: Image.asset(
+                      imagePath,
+                      height: 60, // Измените height и width здесь, чтобы настроить размер иконки
+                      width: 60,
+                      fit: BoxFit.contain,
+                    ),
                   ),
                 ),
               ),

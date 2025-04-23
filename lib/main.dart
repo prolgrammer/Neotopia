@@ -36,6 +36,7 @@ class NeoflexGame extends StatelessWidget {
           primaryColor: Colors.purple,
           scaffoldBackgroundColor: Colors.transparent,
         ),
+        debugShowCheckedModeBanner: false,
         initialRoute: '/login',
         routes: {
           '/login': (context) => LoginScreen(),
