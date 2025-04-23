@@ -5,6 +5,7 @@ import 'package:neotopia/screens/daily_task_screen.dart';
 import 'package:neotopia/screens/main_screen.dart';
 import 'package:neotopia/screens/neopedia_screen.dart';
 import 'package:neotopia/screens/store_screen.dart';
+import 'package:neotopia/splash.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/quest_screen.dart';
@@ -37,8 +38,9 @@ class NeoflexGame extends StatelessWidget {
           scaffoldBackgroundColor: Colors.transparent,
         ),
         debugShowCheckedModeBanner: false,
-        initialRoute: '/login',
+        initialRoute: '/splash',
         routes: {
+          '/splash': (context) => SplashScreen(),
           '/login': (context) => LoginScreen(),
           '/register': (context) => RegisterScreen(),
           '/quest': (context) => QuestScreen(),

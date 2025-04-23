@@ -11,6 +11,13 @@ android {
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
+    applicationVariants.all {
+        outputs.forEach { output ->
+            (output as com.android.build.gradle.internal.api.BaseVariantOutputImpl)
+                .outputFileName = "NeoTopia.apk"
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11

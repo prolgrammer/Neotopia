@@ -6,6 +6,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:neotopia/screens/quest_catalog/adventure/adventure_map_screen.dart';
+import 'package:neotopia/screens/quest_catalog/neo_coder/neo_coder_screen.dart';
 import 'package:neotopia/screens/quest_catalog/pair_match/pair_match_screen.dart';
 import 'package:neotopia/screens/quest_catalog/puzzle/puzzle_screen.dart';
 import 'package:neotopia/screens/quest_catalog/quiz/quiz_screen.dart';
@@ -200,7 +201,7 @@ class _DailyTasksScreenState extends State<DailyTasksScreen> {
       case 'Coder':
         await Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => QuestCatalogScreen()),
+          MaterialPageRoute(builder: (context) => NeoCoderScreen()),
         );
         break;
       default:
