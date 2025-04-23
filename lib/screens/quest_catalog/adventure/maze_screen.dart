@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import '../../constants.dart';
 import 'maze_painter.dart';
 
 class MazeScreen extends StatefulWidget {
   final VoidCallback onComplete;
-  final Future<bool> Function() onStep; // Изменено на Future<bool> для возврата успеха
+  final Future<bool> Function() onStep;
   const MazeScreen({required this.onComplete, required this.onStep, super.key});
 
   @override
@@ -51,11 +52,23 @@ class _MazeScreenState extends State<MazeScreen> {
             print('Showing SnackBar for adventure_steps');
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: const Text(
-                  'Задание выполнено! Пять шагов к успеху\nНаграда: 5 🪙',
-                  style: TextStyle(color: Colors.white),
+                content: Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'Задание выполнено! Пять шагов к успеху\nНаграда: 5',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                    Image.asset(
+                      'assets/images/neocoins.png',
+                      width: 20,
+                      height: 20,
+                      fit: BoxFit.contain,
+                    ),
+                  ],
                 ),
-                backgroundColor: Colors.green.shade700,
+                backgroundColor: const Color(0xFF2E0352),
                 duration: const Duration(seconds: 3),
                 behavior: SnackBarBehavior.floating,
                 shape: RoundedRectangleBorder(
@@ -80,33 +93,47 @@ class _MazeScreenState extends State<MazeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Лабиринт офиса'),
-        backgroundColor: Colors.purple.shade800,
+        backgroundColor: const Color(0xFF2E0352),
         foregroundColor: Colors.white,
+        elevation: 0,
       ),
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.purple.shade300, Colors.purple.shade700],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
+        decoration: const BoxDecoration(gradient: kAppGradient),
         child: Column(
           children: [
             Padding(
               padding: const EdgeInsets.all(16),
-              child: Card(
-                elevation: 8,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFF4A1A7A), width: 1),
+                  boxShadow: const [
+                    BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2)),
+                  ],
+                ),
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Row(
                     children: [
-                      Image.asset(
-                        'assets/images/mascot.jpg',
+                      Container(
                         width: 40,
                         height: 40,
-                        fit: BoxFit.contain,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFF4A1A7A), width: 1),
+                        ),
+                        child: Image.asset(
+                          'assets/images/mascot.jpg',
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) {
+                            print('Error loading mascot.jpg: $error');
+                            return Container(
+                              color: Colors.red,
+                              child: const Center(child: Text('X', style: TextStyle(color: Colors.white))),
+                            );
+                          },
+                        ),
                       ),
                       const SizedBox(width: 8),
                       const Expanded(
@@ -142,10 +169,12 @@ class _MazeScreenState extends State<MazeScreen> {
               child: ElevatedButton(
                 onPressed: _resetMaze,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.purple.shade800,
+                  backgroundColor: const Color(0xFF2E0352),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 4,
+                  shadowColor: Colors.black26,
                 ),
                 child: const Text('Сбросить', style: TextStyle(fontSize: 16)),
               ),

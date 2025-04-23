@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:math';
 import '../../../cubits/game_cubit.dart';
+import '../../constants.dart';
+import 'pair_match_result.dart';
 
 class PairMatchScreen extends StatefulWidget {
+  const PairMatchScreen({super.key});
+
   @override
   _PairMatchScreenState createState() => _PairMatchScreenState();
 }
@@ -38,11 +42,8 @@ class _PairMatchScreenState extends State<PairMatchScreen> with TickerProviderSt
   void _initializeGame() {
     print('Initializing game with $gridRows rows and $gridColumns columns');
     cards.clear();
-    // Duplicate images for pairs
     final List<String> duplicatedImages = [...cardImages, ...cardImages];
-    // Shuffle images
     duplicatedImages.shuffle(Random());
-    // Create card models
     for (int i = 0; i < gridRows * gridColumns; i++) {
       cards.add(CardModel(
         imagePath: duplicatedImages[i],
@@ -74,7 +75,6 @@ class _PairMatchScreenState extends State<PairMatchScreen> with TickerProviderSt
       isProcessing = true;
       print('Second card flipped: $index');
 
-      // Check for match
       if (cards[firstFlippedIndex!].imagePath == cards[secondFlippedIndex!].imagePath) {
         print('Match found!');
         setState(() {
@@ -82,7 +82,6 @@ class _PairMatchScreenState extends State<PairMatchScreen> with TickerProviderSt
           cards[secondFlippedIndex!] = cards[secondFlippedIndex!].copyWith(isMatched: true);
         });
         _resetSelection();
-        // Check if game is over
         if (cards.every((card) => card.isMatched)) {
           print('Game over! Awarding $coinsForCompletion coins');
           setState(() {
@@ -92,8 +91,7 @@ class _PairMatchScreenState extends State<PairMatchScreen> with TickerProviderSt
         }
       } else {
         print('No match, flipping back');
-        // Not a match, flip back after delay
-        await Future.delayed(Duration(milliseconds: 1000));
+        await Future.delayed(const Duration(milliseconds: 1000));
         setState(() {
           cards[firstFlippedIndex!] = cards[firstFlippedIndex!].copyWith(isFlipped: false);
           cards[secondFlippedIndex!] = cards[secondFlippedIndex!].copyWith(isFlipped: false);
@@ -124,114 +122,65 @@ class _PairMatchScreenState extends State<PairMatchScreen> with TickerProviderSt
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Найти пары'),
-        backgroundColor: Colors.purple.shade800,
+        title: const Text('Найди пары'),
+        backgroundColor: const Color(0xFF2E0352),
         foregroundColor: Colors.white,
+        elevation: 0,
       ),
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.purple.shade300, Colors.purple.shade700],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
+        decoration: const BoxDecoration(gradient: kAppGradient),
         child: isGameOver
-            ? Center(
-          child: Padding(
-            padding: EdgeInsets.all(16),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Поздравляем!',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                SizedBox(height: 16),
-                Text(
-                  'Вы нашли все пары и заработали $coinsForCompletion неокоинов! 🎉',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.white,
-                  ),
-                ),
-                SizedBox(height: 32),
-                ElevatedButton(
-                  onPressed: () {
-                    _restartGame();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.purple.shade800,
-                    foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                  ),
-                  child: Text('Играть снова'),
-                ),
-                SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.purple.shade800,
-                    foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                  ),
-                  child: Text('Вернуться'),
-                ),
-              ],
-            ),
-          ),
+            ? PairMatchResult(
+          coinsEarned: coinsForCompletion,
+          onRestart: _restartGame,
+          onBack: () => Navigator.pop(context),
         )
             : Center(
-          child: Padding(
-            padding: EdgeInsets.only(top: 32), // Lift cards higher
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                // Calculate card size based on screen width, leaving margin
-                final maxWidth = constraints.maxWidth * 0.9; // 90% of screen width
-                final maxHeight = (constraints.maxHeight - 32) * 0.65; // 65% of height
-                final cardWidth = maxWidth / gridColumns;
-                final cardHeight = maxHeight / gridRows;
-                final cardSize = min(cardWidth, cardHeight); // Ensure square cards
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 54),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final maxWidth = constraints.maxWidth * 0.9;
+                  final maxHeight = (constraints.maxHeight - 54) * 0.65;
+                  final cardWidth = maxWidth / gridColumns;
+                  final cardHeight = maxHeight / gridRows;
+                  final cardSize = min(cardWidth, cardHeight);
 
-                return ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxWidth: gridColumns * cardSize,
-                    maxHeight: gridRows * cardSize,
-                  ),
-                  child: GridView.builder(
-                    shrinkWrap: true,
-                    physics: NeverScrollableScrollPhysics(),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: gridColumns,
-                      crossAxisSpacing: 8,
-                      mainAxisSpacing: 8,
-                      childAspectRatio: 1,
+                  return ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: gridColumns * cardSize,
+                      maxHeight: gridRows * cardSize,
                     ),
-                    itemCount: gridRows * gridColumns,
-                    itemBuilder: (context, index) {
-                      return Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: () {
-                            print('InkWell tapped for card $index');
-                            _onCardTapped(index);
-                          },
-                          child: CardWidget(
-                            card: cards[index],
-                          ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: gridColumns,
+                          crossAxisSpacing: 8,
+                          mainAxisSpacing: 8,
+                          childAspectRatio: 1,
                         ),
-                      );
-                    },
-                  ),
-                );
-              },
+                        itemCount: gridRows * gridColumns,
+                        itemBuilder: (context, index) {
+                          return Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () {
+                                print('InkWell tapped for card $index');
+                                _onCardTapped(index);
+                              },
+                              child: CardWidget(card: cards[index]),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  );
+                },
+              ),
             ),
           ),
         ),
@@ -266,12 +215,12 @@ class CardModel {
 class CardWidget extends StatelessWidget {
   final CardModel card;
 
-  CardWidget({required this.card});
+  const CardWidget({super.key, required this.card});
 
   @override
   Widget build(BuildContext context) {
     return AnimatedContainer(
-      duration: Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 1000),
       curve: Curves.easeInOut,
       child: card.isMatched
           ? Container()
@@ -282,9 +231,13 @@ class CardWidget extends StatelessWidget {
         alignment: Alignment.center,
         child: Container(
           decoration: BoxDecoration(
-            color: card.isFlipped ? Colors.white : Colors.purple.shade800,
-            borderRadius: BorderRadius.circular(8),
-            boxShadow: [
+            color: card.isFlipped ? Colors.white : const Color(0xFF2E0352),
+            borderRadius: card.isFlipped ? BorderRadius.circular(4) : BorderRadius.zero,
+            border: Border.all(
+              color: const Color(0xFF4A1A7A),
+              width: 1,
+            ),
+            boxShadow: const [
               BoxShadow(
                 color: Colors.black26,
                 blurRadius: 4,
@@ -293,31 +246,24 @@ class CardWidget extends StatelessWidget {
             ],
           ),
           child: card.isFlipped
-              ? Padding(
-            padding: EdgeInsets.all(8), // Padding to fit image
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.asset(
-                card.imagePath,
-                fit: BoxFit.contain, // Fit image without clipping
-                errorBuilder: (context, error, stackTrace) {
-                  print('Error loading image ${card.imagePath}: $error');
-                  return Container(
-                    color: Colors.red,
-                    child: Center(
-                      child: Text(
-                        'X',
-                        style: TextStyle(color: Colors.white, fontSize: 20),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
+              ? Image.asset(
+            card.imagePath,
+            errorBuilder: (context, error, stackTrace) {
+              print('Error loading image ${card.imagePath}: $error');
+              return Container(
+                color: Colors.red,
+                child: const Center(
+                  child: Text(
+                    'X',
+                    style: TextStyle(color: Colors.white, fontSize: 20),
+                  ),
+                ),
+              );
+            },
           )
-              : Center(
+              : const Center(
             child: Icon(
-              Icons.star,
+              Icons.lightbulb,
               color: Colors.white,
               size: 40,
             ),

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart' as intl;
 import '../../../../cubits/auth_cubit.dart';
 import '../../../../cubits/game_cubit.dart';
 import '../../../../models/daily_task_model.dart';
+import '../../constants.dart';
 import 'neo_coder_data.dart' as coderData;
 import 'neo_coder_result.dart';
 
@@ -50,7 +51,6 @@ class _NeoCoderScreenState extends State<NeoCoderScreen> with TickerProviderStat
   }
 
   void _initializeAnimations() {
-    // Success animation
     _animationController = AnimationController(
       duration: const Duration(seconds: 1),
       vsync: this,
@@ -62,7 +62,6 @@ class _NeoCoderScreenState extends State<NeoCoderScreen> with TickerProviderStat
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
 
-    // Error shake animation
     _errorController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
@@ -73,7 +72,6 @@ class _NeoCoderScreenState extends State<NeoCoderScreen> with TickerProviderStat
       TweenSequenceItem(tween: Tween<double>(begin: -0.1, end: 0), weight: 1),
     ]).animate(_errorController);
 
-    // Fade-in animation
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 500),
       vsync: this,
@@ -157,7 +155,7 @@ class _NeoCoderScreenState extends State<NeoCoderScreen> with TickerProviderStat
             'Задание выполнено! ${task.title}\nНаграда: ${task.rewardCoins} 🪙',
             style: const TextStyle(color: Colors.white),
           ),
-          backgroundColor: Colors.green.shade700,
+          backgroundColor: const Color(0xFF2E0352),
           duration: const Duration(seconds: 3),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
@@ -213,7 +211,14 @@ class _NeoCoderScreenState extends State<NeoCoderScreen> with TickerProviderStat
         hasChecked = true;
         errorMessage = 'Ошибка в коде:\n- ${errors.join('\n- ')}';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage)),
+          SnackBar(
+            content: Text(errorMessage, style: const TextStyle(color: Colors.white)),
+            backgroundColor: const Color(0xFF2E0352),
+            duration: const Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            margin: const EdgeInsets.all(16),
+          ),
         );
       });
       return;
@@ -259,7 +264,6 @@ class _NeoCoderScreenState extends State<NeoCoderScreen> with TickerProviderStat
       final isRotationCorrect = rotationEnd != 0 && (rotationNormalized - rotationNormalized.roundToDouble()).abs() < 0.001;
       isCorrect = curveCorrect && isRotationCorrect && (scaleEnd - 1.5).abs() < 0.001;
 
-      // Check coder_correct: Correct code on first attempt
       if (!hasChecked && isCorrect) {
         _checkTask('coder_correct').then((success) {
           if (success) {
@@ -277,7 +281,6 @@ class _NeoCoderScreenState extends State<NeoCoderScreen> with TickerProviderStat
             isGameOver = true;
           });
           context.read<GameCubit>().addCoins(coinsForCompletion);
-          // Check coder_complete: Successfully animate mascot
           _checkTask('coder_complete').then((success) {
             if (success) {
               _showTaskNotification('coder_complete');
@@ -292,7 +295,14 @@ class _NeoCoderScreenState extends State<NeoCoderScreen> with TickerProviderStat
           });
           errorMessage = 'Ошибка! Анимация должна вращать маскота ровно на 360° (используй 2 * 3.14159 или ~6.28318) и увеличивать в 1.5 раза. Попробуй снова!';
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(errorMessage)),
+            SnackBar(
+              content: Text(errorMessage, style: const TextStyle(color: Colors.white)),
+              backgroundColor: const Color(0xFF2E0352),
+              duration: const Duration(seconds: 3),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              margin: const EdgeInsets.all(16),
+            ),
           );
         });
       }
@@ -321,17 +331,12 @@ class _NeoCoderScreenState extends State<NeoCoderScreen> with TickerProviderStat
     return Scaffold(
       appBar: AppBar(
         title: const Text('Нео-Кодер: Анимируй Маскота!'),
-        backgroundColor: Colors.purple.shade800,
+        backgroundColor: const Color(0xFF2E0352),
         foregroundColor: Colors.white,
+        elevation: 0,
       ),
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.purple.shade300, Colors.purple.shade700],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
+        decoration: const BoxDecoration(gradient: kAppGradient),
         child: FadeTransition(
           opacity: _fadeAnimation,
           child: SingleChildScrollView(
@@ -340,9 +345,15 @@ class _NeoCoderScreenState extends State<NeoCoderScreen> with TickerProviderStat
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Card(
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFF4A1A7A), width: 1),
+                      boxShadow: const [
+                        BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2)),
+                      ],
+                    ),
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: Column(
@@ -350,23 +361,23 @@ class _NeoCoderScreenState extends State<NeoCoderScreen> with TickerProviderStat
                         children: [
                           const Text(
                             'Помоги маскоту Neoflex ожить! Дополни код, заменив /* TODO */ на правильные значения, чтобы маскот вращался ровно на 360 градусов и увеличивался в 1.5 раза. Для 360° используй 2 * 3.14159 или ~6.28318. Подсказка: вращение в радианах, выбери подходящую кривую анимации. Не изменяй другие части кода!',
-                            style: TextStyle(fontSize: 16),
+                            style: TextStyle(fontSize: 16, color: Colors.black87),
                           ),
                           const SizedBox(height: 16),
                           const Text(
                             'Фиксированный код:',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
                           ),
                           const SizedBox(height: 8),
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: Colors.grey[200],
+                              color: Colors.grey[100],
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
                               coderData.fixedCode.trim(),
-                              style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                              style: const TextStyle(fontFamily: 'monospace', fontSize: 12, color: Colors.black87),
                             ),
                           ),
                         ],
@@ -383,6 +394,7 @@ class _NeoCoderScreenState extends State<NeoCoderScreen> with TickerProviderStat
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFF4A1A7A), width: 1),
                       boxShadow: const [
                         BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2)),
                       ],
@@ -390,10 +402,10 @@ class _NeoCoderScreenState extends State<NeoCoderScreen> with TickerProviderStat
                     child: TextField(
                       controller: _codeController,
                       maxLines: 8,
-                      style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
-                      decoration: InputDecoration(
-                        contentPadding: const EdgeInsets.all(12),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      style: const TextStyle(fontFamily: 'monospace', fontSize: 12, color: Colors.black87),
+                      decoration: const InputDecoration(
+                        contentPadding: EdgeInsets.all(12),
+                        border: InputBorder.none,
                       ),
                     ),
                   ),
@@ -404,20 +416,26 @@ class _NeoCoderScreenState extends State<NeoCoderScreen> with TickerProviderStat
                       ElevatedButton(
                         onPressed: _resetCode,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.purple.shade800,
+                          backgroundColor: const Color(0xFF2E0352),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          elevation: 4,
+                          shadowColor: Colors.black26,
                         ),
-                        child: const Text('Сбросить'),
+                        child: const Text('Сбросить', style: TextStyle(fontSize: 14)),
                       ),
                       ElevatedButton(
                         onPressed: _checkCode,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.purple.shade800,
+                          backgroundColor: const Color(0xFF2E0352),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          elevation: 4,
+                          shadowColor: Colors.black26,
                         ),
-                        child: const Text('Проверить'),
+                        child: const Text('Проверить', style: TextStyle(fontSize: 14)),
                       ),
                     ],
                   ),
@@ -437,6 +455,7 @@ class _NeoCoderScreenState extends State<NeoCoderScreen> with TickerProviderStat
                                 height: 150,
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: const Color(0xFF4A1A7A), width: 1),
                                   boxShadow: const [
                                     BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2)),
                                   ],

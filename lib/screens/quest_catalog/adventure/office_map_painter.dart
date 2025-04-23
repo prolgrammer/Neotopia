@@ -10,12 +10,12 @@ class OfficeMapPainter extends CustomPainter {
     final cellSize = size.width / 10;
     final floorPaint = Paint()
       ..shader = LinearGradient(
-        colors: [Colors.blueGrey.shade50, Colors.blueGrey.shade200],
+        colors: [const Color(0xFFDE683C), const Color(0xFF2E0352)],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
     final wallPaint = Paint()
-      ..color = Colors.blueGrey.shade900
+      ..color = const Color(0xFF4A1A7A)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
     final shadowPaint = Paint()
@@ -36,7 +36,7 @@ class OfficeMapPainter extends CustomPainter {
               Offset(col * cellSize + cellSize / 2, row * cellSize + cellSize / 2),
               cellSize / 10,
               Paint()
-                ..color = Colors.blueGrey.shade300.withOpacity(0.3)
+                ..color = Colors.white.withOpacity(0.3)
                 ..style = PaintingStyle.fill,
             );
           }
@@ -99,13 +99,13 @@ class OfficeMapPainter extends CustomPainter {
           canvas.drawRect(
             Rect.fromLTWH(col * cellSize, row * cellSize, cellSize, cellSize),
             Paint()
-              ..color = Colors.brown.shade400
+              ..color = const Color(0xFF4A1A7A)
               ..style = PaintingStyle.stroke
               ..strokeWidth = 3,
           );
           textPaint.text = const TextSpan(
             text: 'Вход',
-            style: TextStyle(color: Colors.black87, fontSize: 14, fontWeight: FontWeight.bold),
+            style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
           );
           textPaint.layout();
           textPaint.paint(canvas, Offset(col * cellSize + 10, row * cellSize + cellSize));

@@ -10,20 +10,22 @@ class MazePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final cellSize = size.width / 10;
     final wallPaint = Paint()
-      ..color = Colors.grey.shade800
+      ..color = const Color(0xFF4A1A7A)
       ..style = PaintingStyle.fill;
     final pathPaint = Paint()
       ..shader = LinearGradient(
-        colors: [Colors.purple.shade100, Colors.blue.shade100],
+        colors: [const Color(0xFFDE683C), const Color(0xFF2E0352)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
     final playerPaint = Paint()
-      ..color = Colors.blueAccent
+      ..color = Colors.amber
       ..style = PaintingStyle.fill;
     final startPaint = Paint()
-      ..color = Colors.yellowAccent
+      ..color = Colors.white
       ..style = PaintingStyle.fill;
     final exitPaint = Paint()
-      ..color = Colors.greenAccent
+      ..color = Colors.green.shade700
       ..style = PaintingStyle.fill;
 
     final shadowPaint = Paint()
@@ -61,7 +63,7 @@ class MazePainter extends CustomPainter {
       ),
       cellSize / 2.5,
       Paint()
-        ..color = Colors.blueAccent.withOpacity(0.3)
+        ..color = Colors.amber.withOpacity(0.3)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2,
     );

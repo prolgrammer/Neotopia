@@ -5,6 +5,7 @@ import 'dart:math';
 import '../../../cubits/auth_cubit.dart';
 import '../../../cubits/game_cubit.dart';
 import '../../../models/daily_task_model.dart';
+import '../../constants.dart';
 import 'quiz_data.dart';
 import 'quiz_result.dart';
 
@@ -19,13 +20,14 @@ class _QuizScreenState extends State<QuizScreen> with SingleTickerProviderStateM
   late AnimationController _controller;
   late Animation<double> _animation;
   List<Map<String, dynamic>> selectedQuestions = [];
+  List<String?> userAnswers = []; // Для хранения ответов пользователя
   int currentQuestionIndex = 0;
   int correctAnswers = 0;
   int consecutiveCorrectAnswers = 0; // Для quiz_expert
   int cultureCorrectAnswers = 0; // Для quiz_culture
   bool showResult = false;
   static const int coinsPerCorrectAnswer = 10;
-  List<DailyTask> _dailyTasks = []; // Список заданий
+  List<DailyTask> _dailyTasks = [];
 
   @override
   void initState() {
@@ -44,9 +46,8 @@ class _QuizScreenState extends State<QuizScreen> with SingleTickerProviderStateM
   }
 
   Future<void> _loadDailyTasks() async {
-    // Загружаем задания из модели (можно также загрузить из Firebase, как в AdventureMapScreen)
     setState(() {
-      _dailyTasks = availableTasks.where((task) => task.category == 'Quiz').toList();
+      _dailyTasks = quizTasks.where((task) => task.category == 'Quiz').toList();
       print('Loaded quiz tasks: ${_dailyTasks.map((t) => t.id).toList()}');
     });
   }
@@ -60,6 +61,7 @@ class _QuizScreenState extends State<QuizScreen> with SingleTickerProviderStateM
         selectedQuestions.add(categoryQuestions[random.nextInt(categoryQuestions.length)]);
       }
     }
+    userAnswers = List<String?>.filled(selectedQuestions.length, null);
     print('Selected questions: ${selectedQuestions.map((q) => q['question']).toList()}');
   }
 
@@ -117,7 +119,7 @@ class _QuizScreenState extends State<QuizScreen> with SingleTickerProviderStateM
             'Задание выполнено! ${task.title}\nНаграда: ${task.rewardCoins} 🪙',
             style: const TextStyle(color: Colors.white),
           ),
-          backgroundColor: Colors.green.shade700,
+          backgroundColor: Color(0xFF2E0352), // Цвет Neoflex
           duration: const Duration(seconds: 3),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
@@ -133,26 +135,26 @@ class _QuizScreenState extends State<QuizScreen> with SingleTickerProviderStateM
     final currentQuestion = selectedQuestions[currentQuestionIndex];
     final isCorrect = currentQuestion['correct_answer'] == selectedOption;
 
-    if (isCorrect) {
-      correctAnswers++;
-      consecutiveCorrectAnswers++;
-      if (currentQuestion['category'] == 'Ценности и культура') {
-        cultureCorrectAnswers++;
+    setState(() {
+      userAnswers[currentQuestionIndex] = selectedOption; // Сохраняем ответ пользователя
+      if (isCorrect) {
+        correctAnswers++;
+        consecutiveCorrectAnswers++;
+        if (currentQuestion['category'] == 'Ценности и культура') {
+          cultureCorrectAnswers++;
+        }
+      } else {
+        consecutiveCorrectAnswers = 0;
       }
-      await context.read<GameCubit>().addCoins(coinsPerCorrectAnswer);
-    } else {
-      consecutiveCorrectAnswers = 0; // Сбрасываем счетчик при ошибке
-    }
+    });
 
-    // Проверка задания quiz_expert: 5 правильных ответов подряд
+    // Проверка заданий
     if (consecutiveCorrectAnswers >= 5) {
       final success = await _checkTask('quiz_expert');
       if (success) {
         _showTaskNotification('quiz_expert');
       }
     }
-
-    // Проверка задания quiz_culture: 2 правильных ответа в категории "Ценности и культура"
     if (cultureCorrectAnswers >= 2) {
       final success = await _checkTask('quiz_culture');
       if (success) {
@@ -166,6 +168,8 @@ class _QuizScreenState extends State<QuizScreen> with SingleTickerProviderStateM
         currentQuestionIndex++;
         _controller.forward();
       } else {
+        // Начисляем монеты в конце игры
+        context.read<GameCubit>().addCoins(correctAnswers * coinsPerCorrectAnswer);
         showResult = true;
       }
     });
@@ -182,21 +186,18 @@ class _QuizScreenState extends State<QuizScreen> with SingleTickerProviderStateM
     return Scaffold(
       appBar: AppBar(
         title: const Text('Викторина Neoflex'),
-        backgroundColor: Colors.purple.shade800,
+        backgroundColor: Color(0xFF2E0352), // Цвет Neoflex
         foregroundColor: Colors.white,
+        elevation: 0,
       ),
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.purple.shade300, Colors.purple.shade700],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
+        decoration: const BoxDecoration(gradient: kAppGradient), // Градиент Neoflex
         child: showResult
             ? QuizResult(
           correctAnswers: correctAnswers,
           totalQuestions: selectedQuestions.length,
+          userAnswers: userAnswers,
+          questions: selectedQuestions,
           onBack: () => Navigator.pop(context),
         )
             : FadeTransition(
@@ -219,6 +220,7 @@ class _QuizScreenState extends State<QuizScreen> with SingleTickerProviderStateM
                   style: const TextStyle(
                     fontSize: 18,
                     color: Colors.white,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -231,10 +233,21 @@ class _QuizScreenState extends State<QuizScreen> with SingleTickerProviderStateM
                       onPressed: () => _answerQuestion(option),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
-                        foregroundColor: Colors.purple.shade700,
+                        foregroundColor: Color(0xFF2E0352), // Цвет Neoflex
+                        side: const BorderSide(color: Color(0xFF4A1A7A), width: 1), // Обводка
                         minimumSize: const Size(double.infinity, 50),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 2,
                       ),
-                      child: Text(option),
+                      child: Text(
+                        option,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Color(0xFF2E0352),
+                        ),
+                      ),
                     ),
                   ),
                 )

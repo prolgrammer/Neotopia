@@ -5,6 +5,7 @@ import 'package:intl/intl.dart' as intl;
 import '../../../cubits/auth_cubit.dart';
 import '../../../cubits/game_cubit.dart';
 import '../../../models/daily_task_model.dart';
+import '../../constants.dart';
 import 'office_map_painter.dart';
 import 'maze_screen.dart';
 
@@ -26,7 +27,6 @@ class _AdventureMapScreenState extends State<AdventureMapScreen> with TickerProv
   late Animation<Offset> _markerAnimation;
   late Offset _currentMarkerPosition;
 
-  // Для отслеживания заданий
   List<DailyTask> _dailyTasks = [];
   final DatabaseReference _database = FirebaseDatabase.instance.ref();
   List<String> _completedTasks = [];
@@ -196,7 +196,14 @@ class _AdventureMapScreenState extends State<AdventureMapScreen> with TickerProv
   void _showInfoDialog(BuildContext context, int pointIndex) {
     if (pointIndex > visitedPoints.length + 1) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Сначала посетите предыдущие точки!')),
+        SnackBar(
+          content: const Text('Сначала посетите предыдущие точки!', style: TextStyle(color: Colors.white)),
+          backgroundColor: const Color(0xFF2E0352),
+          duration: const Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          margin: const EdgeInsets.all(16),
+        ),
       );
       return;
     }
@@ -227,8 +234,8 @@ class _AdventureMapScreenState extends State<AdventureMapScreen> with TickerProv
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(title),
-        content: Text(content),
+        title: Text(title, style: const TextStyle(color: Colors.black87)),
+        content: Text(content, style: const TextStyle(color: Colors.black87)),
         actions: [
           TextButton(
             onPressed: () async {
@@ -247,7 +254,7 @@ class _AdventureMapScreenState extends State<AdventureMapScreen> with TickerProv
                 }
               }
             },
-            child: const Text('Закрыть'),
+            child: const Text('Закрыть', style: TextStyle(color: Color(0xFF2E0352))),
           ),
         ],
       ),
@@ -257,7 +264,14 @@ class _AdventureMapScreenState extends State<AdventureMapScreen> with TickerProv
   void _showMaze(BuildContext context) {
     if (visitedPoints.length < 4) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Сначала посетите все информационные точки!')),
+        SnackBar(
+          content: const Text('Сначала посетите все информационные точки!', style: TextStyle(color: Colors.white)),
+          backgroundColor: const Color(0xFF2E0352),
+          duration: const Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          margin: const EdgeInsets.all(16),
+        ),
       );
       return;
     }
@@ -312,69 +326,97 @@ class _AdventureMapScreenState extends State<AdventureMapScreen> with TickerProv
   Widget build(BuildContext context) {
     final cellSize = MediaQuery.of(context).size.width / 10;
     if (isGameOver) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('Карта приключений'),
-          backgroundColor: Colors.purple.shade800,
-          foregroundColor: Colors.white,
-        ),
-        body: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.purple.shade300, Colors.purple.shade700],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    'Поздравляем! 🎉',
+      final totalCoins = visitedPoints.length * coinsPerInfoPoint + coinsForMaze;
+      return Container(
+        decoration: const BoxDecoration(gradient: kAppGradient),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  'Поздравляем!',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    decoration: TextDecoration.none,
+                  ),
+                ),
+                const SizedBox(height: 24), // Увеличено с 16 до 24
+                Text(
+                  'Вы исследовали офис Neoflex и покорили лабиринт! Заработано $totalCoins неокоинов',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    color: Colors.white,
+                    decoration: TextDecoration.none,
+                  ),
+                ),
+                const SizedBox(height: 16), // Увеличено с 8 до 16
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      '+$totalCoins',
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.amber,
+                        decoration: TextDecoration.none,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Image.asset(
+                      'assets/images/neocoins.png',
+                      width: 24,
+                      height: 24,
+                      fit: BoxFit.contain,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 32),
+                ElevatedButton(
+                  onPressed: _restartGame,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2E0352),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 4,
+                    shadowColor: Colors.black26,
+                  ),
+                  child: const Text(
+                    'Играть снова',
                     style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      fontSize: 16,
+                      decoration: TextDecoration.none, // Убираем подчёркивание
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Вы исследовали офис Neoflex и покорили лабиринт! Заработано ${visitedPoints.length * coinsPerInfoPoint + coinsForMaze} неокоинов! 🏆',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      color: Colors.white,
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2E0352),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 4,
+                    shadowColor: Colors.black26,
+                  ),
+                  child: const Text(
+                    'Вернуться',
+                    style: TextStyle(
+                      fontSize: 16,
+                      decoration: TextDecoration.none, // Убираем подчёркивание
                     ),
                   ),
-                  const SizedBox(height: 32),
-                  ElevatedButton(
-                    onPressed: _restartGame,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.purple.shade800,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                    child: const Text('Играть снова', style: TextStyle(fontSize: 16)),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.purple.shade800,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                    child: const Text('Вернуться', style: TextStyle(fontSize: 16)),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
@@ -384,28 +426,29 @@ class _AdventureMapScreenState extends State<AdventureMapScreen> with TickerProv
     return Scaffold(
       appBar: AppBar(
         title: const Text('Карта приключений'),
-        backgroundColor: Colors.purple.shade800,
+        backgroundColor: const Color(0xFF2E0352),
         foregroundColor: Colors.white,
+        elevation: 0,
       ),
       body: Stack(
         children: [
           Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.purple.shade300, Colors.purple.shade700],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
+            decoration: const BoxDecoration(gradient: kAppGradient),
             child: FadeTransition(
               opacity: _fadeAnimation,
               child: Column(
                 children: [
                   Padding(
                     padding: const EdgeInsets.all(16),
-                    child: Card(
-                      elevation: 8,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFF4A1A7A), width: 1),
+                        boxShadow: const [
+                          BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2)),
+                        ],
+                      ),
                       child: const Padding(
                         padding: EdgeInsets.all(16),
                         child: Text(
@@ -492,11 +535,27 @@ class _AdventureMapScreenState extends State<AdventureMapScreen> with TickerProv
                             return Positioned(
                               left: _markerAnimation.value.dx,
                               top: _markerAnimation.value.dy,
-                              child: Image.asset(
-                                'assets/images/mascot.jpg',
+                              child: Container(
                                 width: 40,
                                 height: 40,
-                                fit: BoxFit.contain,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: const Color(0xFF4A1A7A), width: 1),
+                                  boxShadow: const [
+                                    BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2)),
+                                  ],
+                                ),
+                                child: Image.asset(
+                                  'assets/images/mascot.jpg',
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    print('Error loading mascot.jpg: $error');
+                                    return Container(
+                                      color: Colors.red,
+                                      child: const Center(child: Text('X', style: TextStyle(color: Colors.white))),
+                                    );
+                                  },
+                                ),
                               ),
                             );
                           },
@@ -533,7 +592,7 @@ class _AdventureMapScreenState extends State<AdventureMapScreen> with TickerProv
                       child: Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.green.shade700,
+                          color: const Color(0xFF2E0352),
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: const [
                             BoxShadow(
@@ -566,12 +625,30 @@ class _AdventureMapScreenState extends State<AdventureMapScreen> with TickerProv
                                       fontSize: 14,
                                     ),
                                   ),
-                                  Text(
-                                    'Награда: ${task.rewardCoins} 🪙',
-                                    style: const TextStyle(
-                                      color: Colors.amber,
-                                      fontSize: 14,
-                                    ),
+                                  Row(
+                                    children: [
+                                      const Text(
+                                        'Награда: ',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      Text(
+                                        '${task.rewardCoins}',
+                                        style: const TextStyle(
+                                          color: Colors.amber,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Image.asset(
+                                        'assets/images/neocoins.png',
+                                        width: 20,
+                                        height: 20,
+                                        fit: BoxFit.contain,
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
