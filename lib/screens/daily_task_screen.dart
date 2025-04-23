@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -8,6 +10,7 @@ import 'package:neotopia/screens/quest_catalog_screen.dart';
 import 'dart:math';
 import '../cubits/auth_cubit.dart';
 import '../models/daily_task_model.dart';
+import 'constants.dart';
 
 class DailyTasksScreen extends StatefulWidget {
   @override
@@ -191,122 +194,292 @@ class _DailyTasksScreenState extends State<DailyTasksScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Ежедневные задания'),
-        backgroundColor: Colors.purple.shade800,
-        foregroundColor: Colors.white,
-      ),
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.purple.shade300, Colors.purple.shade700],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: _isLoading
-            ? Center(child: CircularProgressIndicator())
-            : _errorMessage != null
-            ? Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        decoration: BoxDecoration(gradient: kAppGradient), // Используем тот же градиент
+        child: Stack(
           children: [
-            Text(
-              _errorMessage!,
-              style: TextStyle(color: Colors.white, fontSize: 16),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 16),
-            if (_dailyTasks.isNotEmpty)
-              ElevatedButton(
-                onPressed: () => setState(() => _errorMessage = null),
-                child: Text('Показать задания'),
-              ),
-          ],
-        )
-            : Padding(
-          padding: EdgeInsets.all(16),
-          child: ListView.builder(
-            itemCount: _dailyTasks.length,
-            itemBuilder: (context, index) {
-              final task = _dailyTasks[index];
-              final isCompleted = _taskCompletionStatus[task.id] ?? false;
-              return Card(
-                elevation: 4,
-                margin: EdgeInsets.only(bottom: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              task.title,
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.purple.shade800,
+            SafeArea(
+              child: Column(
+                children: [
+                  // Верхняя плашка (как в QuestCatalogScreen)
+                  Container(
+                    padding: EdgeInsets.all(16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Аватар и ник
+                        Row(
+                          children: [
+                            BlocBuilder<AuthCubit, AuthState>(
+                              builder: (context, state) {
+                                return CircleAvatar(
+                                  radius: 24,
+                                  backgroundImage: state.user?.avatarUrl != null
+                                      ? FileImage(File(state.user!.avatarUrl!))
+                                      : AssetImage('assets/images/avatar.jpg') as ImageProvider,
+                                );
+                              },
+                            ),
+                            SizedBox(width: 8),
+                            BlocBuilder<AuthCubit, AuthState>(
+                              builder: (context, state) {
+                                return Text(
+                                  state.user?.username ?? 'Пользователь',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                        // Логотип Neotopia
+                        Image.asset(
+                          'assets/images/neotopia.png',
+                          height: 40,
+                        ),
+                        // Монеты
+                        Row(
+                          children: [
+                            Image.asset(
+                              'assets/images/neocoins.png',
+                              height: 24,
+                            ),
+                            SizedBox(width: 4),
+                            BlocBuilder<AuthCubit, AuthState>(
+                              builder: (context, state) {
+                                return Text(
+                                  '${state.user?.coins ?? 0}',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Белая полоска
+                  Divider(
+                    color: Colors.white,
+                    thickness: 2,
+                    height: 1,
+                  ),
+                  // Заголовок "Ежедневные задания"
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                    child: Text(
+                      'Ежедневные задания',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  // Основное содержимое
+                  Expanded(
+                    child: _isLoading
+                        ? Center(
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                      ),
+                    )
+                        : _errorMessage != null
+                        ? Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          _errorMessage!,
+                          style: TextStyle(color: Colors.white, fontSize: 16),
+                          textAlign: TextAlign.center,
+                        ),
+                        SizedBox(height: 16),
+                        if (_dailyTasks.isNotEmpty)
+                          ElevatedButton(
+                            onPressed: () => setState(() => _errorMessage = null),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: Color(0xFF4A1A7A),
+                            ),
+                            child: Text('Показать задания'),
+                          ),
+                      ],
+                    )
+                        : Padding(
+                      padding: EdgeInsets.all(16),
+                      child: ListView.builder(
+                        itemCount: _dailyTasks.length,
+                        itemBuilder: (context, index) {
+                          final task = _dailyTasks[index];
+                          final isCompleted = _taskCompletionStatus[task.id] ?? false;
+                          return Container(
+                            margin: EdgeInsets.only(bottom: 16),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.9),
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 8,
+                                  offset: Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Padding(
+                              padding: EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          task.title,
+                                          style: TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFF2E0352),
+                                          ),
+                                        ),
+                                      ),
+                                      if (isCompleted)
+                                        Icon(
+                                          Icons.check_circle,
+                                          color: Colors.green,
+                                          size: 28,
+                                        ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    'Категория: ${task.category}',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Color(0xFF4A1A7A).withOpacity(0.7),
+                                    ),
+                                  ),
+                                  SizedBox(height: 12),
+                                  Text(
+                                    task.description,
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    'Цель: ${task.goal}',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontStyle: FontStyle.italic,
+                                      color: Colors.black54,
+                                    ),
+                                  ),
+                                  SizedBox(height: 16),
+                                  Row(
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Image.asset(
+                                            'assets/images/neocoins.png',
+                                            height: 24,
+                                          ),
+                                          SizedBox(width: 4),
+                                          Text(
+                                            '${task.rewardCoins}',
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xFF2E0352),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      Spacer(),
+                                      ElevatedButton(
+                                        onPressed: isCompleted
+                                            ? null
+                                            : () => _navigateToQuest(context, task),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: isCompleted
+                                              ? Colors.grey
+                                              : Color(0xFF4A1A7A),
+                                          foregroundColor: Colors.white,
+                                          padding: EdgeInsets.symmetric(
+                                              horizontal: 24, vertical: 12),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                        ),
+                                        child: Text(
+                                          isCompleted ? 'Выполнено' : 'Начать',
+                                          style: TextStyle(fontSize: 16),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ),
                             ),
-                          ),
-                          if (isCompleted)
-                            Icon(
-                              Icons.check_circle,
-                              color: Colors.green.shade700,
-                              size: 24,
-                            ),
-                        ],
+                          );
+                        },
                       ),
-                      SizedBox(height: 8),
-                      Text(
-                        'Категория: ${task.category}',
-                        style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Кнопка "Домой" (как в QuestCatalogScreen)
+            Positioned(
+              bottom: 52,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.pushReplacementNamed(context, '/main');
+                  },
+                  child: Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white,
+                      border: Border.all(color: Color(0xFF4A1A7A), width: 1),
+                      boxShadow: [
+                      BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
+                      )],
+                    ),
+                    child: Center(
+                      child: Image.asset(
+                        'assets/images/home.png',
+                        height: 32,
+                        width: 32,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Icon(
+                            Icons.home,
+                            color: Color(0xFF2E0352),
+                            size: 24,
+                          );
+                        },
                       ),
-                      SizedBox(height: 8),
-                      Text(
-                        task.description,
-                        style: TextStyle(fontSize: 16),
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        'Цель: ${task.goal}',
-                        style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
-                      ),
-                      SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Text(
-                            'Награда: ${task.rewardCoins} 🪙',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.amber,
-                            ),
-                          ),
-                          Spacer(),
-                          ElevatedButton(
-                            onPressed: isCompleted
-                                ? null
-                                : () => _navigateToQuest(context, task),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.purple.shade600,
-                              foregroundColor: Colors.white,
-                              disabledBackgroundColor: Colors.grey.shade400,
-                            ),
-                            child: Text(isCompleted ? 'Выполнено' : 'Начать'),
-                          ),
-                        ],
-                      ),
-                    ],
+                    ),
                   ),
                 ),
-              );
-            },
-          ),
+              ),
+            ),
+          ],
         ),
       ),
     );
