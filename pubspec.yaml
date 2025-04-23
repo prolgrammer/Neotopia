@@ -69,6 +69,8 @@ flutter:
     - assets/images/pairs/
     - assets/images/puzzle/
     - assets/images/merch/
+    - assets/images/places/
+    - assets/images/games/
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

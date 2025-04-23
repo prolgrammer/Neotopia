@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:neotopia/screens/store_screen.dart';
 import '../cubits/auth_cubit.dart';
+import 'constants.dart';
 import 'daily_task_screen.dart';
 import 'neopedia_screen.dart';
 import 'dart:io';
@@ -11,56 +12,41 @@ class MainScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.purple.shade300, Colors.purple.shade700],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 16,
-            right: 16,
-            child: Image.asset(
-              'assets/images/mascot.jpg',
-              height: 100,
-            ),
-          ),
-          SafeArea(
-            child: Column(
-              children: [
-                // Плашка с аватаром и монетами
-                Container(
-                  padding: EdgeInsets.all(16),
-                  color: Colors.purple.shade800,
-                  child: Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () async {
-                          final picker = ImagePicker();
-                          final image = await picker.pickImage(source: ImageSource.gallery);
-                          if (image != null) {
-                            context.read<AuthCubit>().uploadAvatar(image);
-                          }
-                        },
-                        child: BlocBuilder<AuthCubit, AuthState>(
-                          builder: (context, state) {
-                            return CircleAvatar(
-                              radius: 24,
-                              backgroundImage: state.user?.avatarUrl != null
-                                  ? FileImage(File(state.user!.avatarUrl!))
-                                  : AssetImage('assets/images/avatar.jpg'),
-                            );
+      body: Container(
+        decoration: BoxDecoration(gradient: kAppGradient),
+        child: SafeArea(
+          child: Column(
+            children: [
+              // Верхняя часть с аватаром, ником, логотипом и монетами
+              Container(
+                padding: EdgeInsets.all(16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Аватар и ник
+                    Row(
+                      children: [
+                        GestureDetector(
+                          onTap: () async {
+                            final picker = ImagePicker();
+                            final image = await picker.pickImage(source: ImageSource.gallery);
+                            if (image != null) {
+                              context.read<AuthCubit>().uploadAvatar(image);
+                            }
                           },
+                          child: BlocBuilder<AuthCubit, AuthState>(
+                            builder: (context, state) {
+                              return CircleAvatar(
+                                radius: 24,
+                                backgroundImage: state.user?.avatarUrl != null
+                                    ? FileImage(File(state.user!.avatarUrl!))
+                                    : AssetImage('assets/images/avatar.jpg'),
+                              );
+                            },
+                          ),
                         ),
-                      ),
-                      SizedBox(width: 16),
-                      Expanded(
-                        child: BlocBuilder<AuthCubit, AuthState>(
+                        SizedBox(width: 8),
+                        BlocBuilder<AuthCubit, AuthState>(
                           builder: (context, state) {
                             return Text(
                               state.user?.username ?? 'Пользователь',
@@ -72,75 +58,93 @@ class MainScreen extends StatelessWidget {
                             );
                           },
                         ),
-                      ),
-                      Row(
-                        children: [
-                          Text(
-                            '🪙 ${context.watch<AuthCubit>().state.user?.coins ?? 0}',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                            ),
+                      ],
+                    ),
+                    // Логотип Neotopia
+                    Image.asset(
+                      'assets/images/neotopia.png',
+                      height: 40,
+                    ),
+                    // Монеты
+                    Row(
+                      children: [
+                        Image.asset(
+                          'assets/images/neocoins.png',
+                          height: 24,
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          '${context.watch<AuthCubit>().state.user?.coins ?? 0}',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
                           ),
-                        ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              // Белая полоска
+              Divider(
+                color: Colors.white,
+                thickness: 2,
+                height: 1,
+              ),
+              // Карточки
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: ListView(
+                    children: [
+                      MainCard(
+                        title: 'Ежедневные задания',
+                        imagePath: 'assets/images/places/daily.png',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => DailyTasksScreen()),
+                          );
+                        },
+                      ),
+                      SizedBox(height: 16),
+                      MainCard(
+                        title: 'Каталог игр',
+                        imagePath: 'assets/images/places/games.png',
+                        onTap: () {
+                          Navigator.pushNamed(context, '/quest_catalog');
+                        },
+                      ),
+                      SizedBox(height: 16),
+                      MainCard(
+                        title: 'Неопедия',
+                        imagePath: 'assets/images/places/neopedia.png',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => NeopediaScreen()),
+                          );
+                        },
+                      ),
+                      SizedBox(height: 16),
+                      MainCard(
+                        title: 'Магазин',
+                        imagePath: 'assets/images/places/market.png',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => StoreScreen()),
+                          );
+                        },
                       ),
                     ],
                   ),
                 ),
-                // Карточки
-                Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.all(16),
-                    child: ListView(
-                      children: [
-                        MainCard(
-                          title: 'Ежедневные задания',
-                          icon: '📋',
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => DailyTasksScreen()),
-                            );
-                          },
-                        ),
-                        SizedBox(height: 16),
-                        MainCard(
-                          title: 'Каталог игр',
-                          icon: '🎮',
-                          onTap: () {
-                            Navigator.pushNamed(context, '/quest_catalog');
-                          },
-                        ),
-                        SizedBox(height: 16),
-                        MainCard(
-                          title: 'Неопедия',
-                          icon: '📚',
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => NeopediaScreen()),
-                            );
-                          },
-                        ),
-                        SizedBox(height: 16),
-                        MainCard(
-                          title: 'Магазин',
-                          icon: '🛒',
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => StoreScreen()),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -148,12 +152,12 @@ class MainScreen extends StatelessWidget {
 
 class MainCard extends StatelessWidget {
   final String title;
-  final String icon;
+  final String imagePath;
   final VoidCallback onTap;
 
   MainCard({
     required this.title,
-    required this.icon,
+    required this.imagePath,
     required this.onTap,
   });
 
@@ -179,11 +183,14 @@ class MainCard extends StatelessWidget {
             children: [
               Container(
                 width: 80,
-                color: Colors.purple.shade100,
+                color: Colors.white, // Новый цвет для боковой полосы
+                // Альтернатива: color: Colors.white, // Для белого фона
                 child: Center(
-                  child: Text(
-                    icon,
-                    style: TextStyle(fontSize: 40),
+                  child: Image.asset(
+                    imagePath,
+                    height: 40,
+                    width: 40,
+                    fit: BoxFit.contain,
                   ),
                 ),
               ),
