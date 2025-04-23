@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 
 class NeopediaCard extends StatelessWidget {
   final String title;
-  final String icon;
+  final String imagePath;
   final VoidCallback onTap;
 
   NeopediaCard({
     required this.title,
-    required this.icon,
+    required this.imagePath,
     required this.onTap,
   });
 
@@ -33,11 +33,17 @@ class NeopediaCard extends StatelessWidget {
             children: [
               Container(
                 width: 80,
-                color: Colors.purple.shade100,
+                color: Color(0xFFE6D7FF), // Светло-фиолетовый фон, как в kAppGradient
                 child: Center(
-                  child: Text(
-                    icon,
-                    style: TextStyle(fontSize: 40),
+                  child: Image.asset(
+                    imagePath,
+                    width: 48,
+                    height: 48,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      print('Error loading image: $error');
+                      return Icon(Icons.image, size: 40, color: Color(0xFF4A1A7A));
+                    },
                   ),
                 ),
               ),
@@ -49,6 +55,7 @@ class NeopediaCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
+                      color: Color(0xFF2E0352), // Темно-фиолетовый текст
                     ),
                   ),
                 ),
