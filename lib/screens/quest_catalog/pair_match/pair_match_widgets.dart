@@ -43,7 +43,7 @@ class CardWidget extends StatelessWidget {
         alignment: Alignment.center,
         child: Container(
           decoration: BoxDecoration(
-            color: card.isFlipped ? Colors.white : Colors.purple.shade800,
+            color: card.isFlipped ? Colors.white : const Color(0xFF2E0352),
             borderRadius: BorderRadius.circular(8),
             boxShadow: const [
               BoxShadow(

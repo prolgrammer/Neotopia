@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart' as intl;
 import 'dart:math';
+import '../../../cubits/auth_cubit.dart';
 import '../../../cubits/game_cubit.dart';
+import '../../../models/daily_task_model.dart';
 import '../../constants.dart';
+import 'pair_match_data.dart' as pairData;
+import 'pair_match_widgets.dart';
 import 'pair_match_result.dart';
 
 class PairMatchScreen extends StatefulWidget {
@@ -18,31 +23,34 @@ class _PairMatchScreenState extends State<PairMatchScreen> with TickerProviderSt
   static const int totalPairs = 6;
   static const int coinsForCompletion = 50;
 
-  List<String> cardImages = [
-    'assets/images/pairs/card1.png',
-    'assets/images/pairs/card2.png',
-    'assets/images/pairs/card3.png',
-    'assets/images/pairs/card4.png',
-    'assets/images/pairs/card5.png',
-    'assets/images/pairs/card6.png',
-  ];
-
   List<CardModel> cards = [];
   int? firstFlippedIndex;
   int? secondFlippedIndex;
   bool isProcessing = false;
   bool isGameOver = false;
+  bool isFirstPairAttempt = true;
+  int matchedPairs = 0;
+  List<DailyTask> _dailyTasks = [];
+  final Map<String, bool> _taskCompletionStatus = {};
 
   @override
   void initState() {
     super.initState();
+    _loadDailyTasks();
     _initializeGame();
+  }
+
+  Future<void> _loadDailyTasks() async {
+    setState(() {
+      _dailyTasks = pairData.pairTasks;
+      print('Loaded pair tasks: ${_dailyTasks.map((t) => t.id).toList()}');
+    });
   }
 
   void _initializeGame() {
     print('Initializing game with $gridRows rows and $gridColumns columns');
     cards.clear();
-    final List<String> duplicatedImages = [...cardImages, ...cardImages];
+    final List<String> duplicatedImages = [...pairData.cardImages, ...pairData.cardImages];
     duplicatedImages.shuffle(Random());
     for (int i = 0; i < gridRows * gridColumns; i++) {
       cards.add(CardModel(
@@ -52,7 +60,15 @@ class _PairMatchScreenState extends State<PairMatchScreen> with TickerProviderSt
       ));
     }
     print('Cards initialized: ${cards.map((c) => c.imagePath).toList()}');
-    setState(() {});
+    setState(() {
+      isFirstPairAttempt = true;
+      matchedPairs = 0;
+      isGameOver = false;
+      firstFlippedIndex = null;
+      secondFlippedIndex = null;
+      isProcessing = false;
+      _taskCompletionStatus.clear();
+    });
   }
 
   void _onCardTapped(int index) async {
@@ -80,7 +96,26 @@ class _PairMatchScreenState extends State<PairMatchScreen> with TickerProviderSt
         setState(() {
           cards[firstFlippedIndex!] = cards[firstFlippedIndex!].copyWith(isMatched: true);
           cards[secondFlippedIndex!] = cards[secondFlippedIndex!].copyWith(isMatched: true);
+          matchedPairs++;
         });
+
+        if (isFirstPairAttempt) {
+          final success = await _checkTask('pairs_quick');
+          if (success) {
+            _showTaskNotification('pairs_quick');
+            _taskCompletionStatus['pairs_quick'] = true;
+          }
+        }
+        isFirstPairAttempt = false;
+
+        if (matchedPairs >= 4) {
+          final success = await _checkTask('pairs_clear');
+          if (success) {
+            _showTaskNotification('pairs_clear');
+            _taskCompletionStatus['pairs_clear'] = true;
+          }
+        }
+
         _resetSelection();
         if (cards.every((card) => card.isMatched)) {
           print('Game over! Awarding $coinsForCompletion coins');
@@ -91,6 +126,7 @@ class _PairMatchScreenState extends State<PairMatchScreen> with TickerProviderSt
         }
       } else {
         print('No match, flipping back');
+        isFirstPairAttempt = false;
         await Future.delayed(const Duration(milliseconds: 1000));
         setState(() {
           cards[firstFlippedIndex!] = cards[firstFlippedIndex!].copyWith(isFlipped: false);
@@ -110,12 +146,74 @@ class _PairMatchScreenState extends State<PairMatchScreen> with TickerProviderSt
 
   void _restartGame() {
     setState(() {
-      isGameOver = false;
-      firstFlippedIndex = null;
-      secondFlippedIndex = null;
-      isProcessing = false;
       _initializeGame();
     });
+  }
+
+  Future<bool> _checkTask(String taskId) async {
+    print('Checking task: $taskId');
+    final uid = context.read<AuthCubit>().state.user?.uid;
+    if (uid == null) {
+      print('No user logged in');
+      return false;
+    }
+
+    final now = DateTime.now().toUtc().add(const Duration(hours: 3));
+    final dateKey = intl.DateFormat('yyyy-MM-dd').format(now);
+
+    final task = _dailyTasks.firstWhere(
+          (t) => t.id == taskId,
+      orElse: () => DailyTask(id: '', category: '', title: '', description: '', goal: '', rewardCoins: 0),
+    );
+    if (task.id.isEmpty) {
+      print('Task $taskId not found in daily tasks');
+      return false;
+    }
+
+    final isCompleted = await context.read<AuthCubit>().isDailyTaskCompleted(uid, taskId, dateKey);
+    if (isCompleted) {
+      print('Task $taskId already completed');
+      return false;
+    }
+
+    try {
+      print('Completing task $taskId with reward ${task.rewardCoins}');
+      await context.read<AuthCubit>().completeDailyTask(uid, taskId, dateKey, task.rewardCoins);
+      print('Daily task $taskId completed, ${task.rewardCoins} coins added');
+      return true;
+    } catch (e) {
+      print('Error completing task $taskId: $e');
+      return false;
+    }
+  }
+
+  void _showTaskNotification(String taskId) {
+    final task = _dailyTasks.firstWhere(
+          (t) => t.id == taskId,
+      orElse: () => DailyTask(id: '', category: '', title: '', description: '', goal: '', rewardCoins: 0),
+    );
+    if (task.id.isEmpty) {
+      print('No task found for $taskId, skipping notification');
+      return;
+    }
+    if (mounted) {
+      print('Showing SnackBar for $taskId');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Задание выполнено! ${task.title}\nНаграда: ${task.rewardCoins} 🪙',
+            style: const TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Colors.green.shade700,
+          duration: const Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          margin: const EdgeInsets.all(16),
+        ),
+      );
+    }
   }
 
   @override
@@ -132,6 +230,9 @@ class _PairMatchScreenState extends State<PairMatchScreen> with TickerProviderSt
         child: isGameOver
             ? PairMatchResult(
           coinsEarned: coinsForCompletion,
+          taskCoins: _taskCompletionStatus.entries
+              .where((entry) => entry.value)
+              .fold(0, (sum, entry) => sum + (_dailyTasks.firstWhere((t) => t.id == entry.key).rewardCoins)),
           onRestart: _restartGame,
           onBack: () => Navigator.pop(context),
         )
@@ -181,91 +282,6 @@ class _PairMatchScreenState extends State<PairMatchScreen> with TickerProviderSt
                   );
                 },
               ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class CardModel {
-  final String imagePath;
-  final bool isFlipped;
-  final bool isMatched;
-
-  CardModel({
-    required this.imagePath,
-    this.isFlipped = false,
-    this.isMatched = false,
-  });
-
-  CardModel copyWith({
-    bool? isFlipped,
-    bool? isMatched,
-  }) {
-    return CardModel(
-      imagePath: imagePath,
-      isFlipped: isFlipped ?? this.isFlipped,
-      isMatched: isMatched ?? this.isMatched,
-    );
-  }
-}
-
-class CardWidget extends StatelessWidget {
-  final CardModel card;
-
-  const CardWidget({super.key, required this.card});
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 1000),
-      curve: Curves.easeInOut,
-      child: card.isMatched
-          ? Container()
-          : Transform(
-        transform: Matrix4.identity()
-          ..setEntry(3, 2, 0.001)
-          ..rotateY(card.isFlipped ? 0 : pi),
-        alignment: Alignment.center,
-        child: Container(
-          decoration: BoxDecoration(
-            color: card.isFlipped ? Colors.white : const Color(0xFF2E0352),
-            borderRadius: card.isFlipped ? BorderRadius.circular(4) : BorderRadius.zero,
-            border: Border.all(
-              color: const Color(0xFF4A1A7A),
-              width: 1,
-            ),
-            boxShadow: const [
-              BoxShadow(
-                color: Colors.black26,
-                blurRadius: 4,
-                offset: Offset(0, 2),
-              ),
-            ],
-          ),
-          child: card.isFlipped
-              ? Image.asset(
-            card.imagePath,
-            errorBuilder: (context, error, stackTrace) {
-              print('Error loading image ${card.imagePath}: $error');
-              return Container(
-                color: Colors.red,
-                child: const Center(
-                  child: Text(
-                    'X',
-                    style: TextStyle(color: Colors.white, fontSize: 20),
-                  ),
-                ),
-              );
-            },
-          )
-              : const Center(
-            child: Icon(
-              Icons.lightbulb,
-              color: Colors.white,
-              size: 40,
             ),
           ),
         ),

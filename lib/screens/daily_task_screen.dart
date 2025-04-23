@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -5,7 +6,9 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:neotopia/screens/quest_catalog/adventure/adventure_map_screen.dart';
+import 'package:neotopia/screens/quest_catalog/pair_match/pair_match_screen.dart';
 import 'package:neotopia/screens/quest_catalog/puzzle/puzzle_screen.dart';
+import 'package:neotopia/screens/quest_catalog/quiz/quiz_screen.dart';
 import 'package:neotopia/screens/quest_catalog_screen.dart';
 import 'dart:math';
 import '../cubits/auth_cubit.dart';
@@ -23,6 +26,7 @@ class _DailyTasksScreenState extends State<DailyTasksScreen> {
   Map<String, bool> _taskCompletionStatus = {};
   bool _isLoading = true;
   String? _errorMessage;
+  StreamSubscription<DatabaseEvent>? _taskProgressSubscription;
 
   @override
   void initState() {
@@ -118,14 +122,17 @@ class _DailyTasksScreenState extends State<DailyTasksScreen> {
     final now = DateTime.now().toUtc().add(Duration(hours: 3));
     final dateKey = DateFormat('yyyy-MM-dd').format(now);
 
-    _database
+    // Отписываемся от предыдущей подписки, если она есть
+    _taskProgressSubscription?.cancel();
+
+    _taskProgressSubscription = _database
         .child('users')
         .child(uid)
         .child('daily_tasks_progress')
         .child(dateKey)
         .onValue
         .listen((event) {
-      if (event.snapshot.exists && event.snapshot.value != null) {
+      if (mounted && event.snapshot.exists && event.snapshot.value != null) {
         final progressData = event.snapshot.value as Map<dynamic, dynamic>;
         final newStatus = progressData.map((taskId, data) {
           final taskProgress = Map<String, dynamic>.from(data);
@@ -136,12 +143,21 @@ class _DailyTasksScreenState extends State<DailyTasksScreen> {
         });
         setState(() {
           _taskCompletionStatus = newStatus;
-          print('Task progress updated from Firebase: $_taskCompletionStatus');
         });
       }
     }, onError: (error) {
-      print('Error listening to task progress: $error');
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Ошибка обновления статуса заданий';
+        });
+      }
     });
+  }
+
+  @override
+  void dispose() {
+    _taskProgressSubscription?.cancel(); // Отписываемся от слушателя
+    super.dispose();
   }
 
   List<DailyTask> _generateDailyTasks() {
@@ -170,7 +186,17 @@ class _DailyTasksScreenState extends State<DailyTasksScreen> {
         );
         break;
       case 'Quiz':
+        await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => QuizScreen()),
+        );
+        break;
       case 'Pairs':
+        await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => PairMatchScreen()),
+        );
+        break;
       case 'Coder':
         await Navigator.push(
           context,
@@ -178,13 +204,15 @@ class _DailyTasksScreenState extends State<DailyTasksScreen> {
         );
         break;
       default:
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Квест пока недоступен')),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Квест пока недоступен')),
+          );
+        }
         return;
     }
-    // Обновляем статус заданий при возврате
-    if (context.read<AuthCubit>().state.user != null) {
+
+    if (mounted && context.read<AuthCubit>().state.user != null) {
       final now = DateTime.now().toUtc().add(Duration(hours: 3));
       final dateKey = DateFormat('yyyy-MM-dd').format(now);
       await _updateTaskCompletionStatus(context.read<AuthCubit>().state.user!.uid, dateKey);
