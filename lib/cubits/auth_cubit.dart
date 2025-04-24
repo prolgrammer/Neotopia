@@ -7,25 +7,38 @@ import '../models/user_model.dart';
 import '../models/daily_task_progress_model.dart';
 import 'dart:io';
 
+enum AuthStatus {
+  initial,
+  loading,
+  authenticated,
+  unauthenticated,
+  error,
+}
+
 class AuthState {
   final UserModel? user;
   final String error;
-  final bool isLoading;
+  final AuthStatus status;
 
   AuthState({
     this.user,
     this.error = '',
-    this.isLoading = false,
+    this.status = AuthStatus.initial,
   });
 
-  AuthState copyWith({UserModel? user, String? error, bool? isLoading}) {
+  AuthState copyWith({
+    UserModel? user,
+    String? error,
+    AuthStatus? status,
+  }) {
     return AuthState(
       user: user ?? this.user,
       error: error ?? this.error,
-      isLoading: isLoading ?? this.isLoading,
+      status: status ?? this.status,
     );
   }
 }
+
 
 class AuthCubit extends Cubit<AuthState> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -34,9 +47,8 @@ class AuthCubit extends Cubit<AuthState> {
   AuthCubit() : super(AuthState());
 
   Future<void> register(String email, String username, String password) async {
-    emit(state.copyWith(isLoading: true, error: ''));
+    emit(state.copyWith(status: AuthStatus.loading, error: ''));
     try {
-      print('Starting registration for email: $email');
       UserCredential credential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
@@ -44,11 +56,9 @@ class AuthCubit extends Cubit<AuthState> {
 
       final firebaseUser = credential.user;
       if (firebaseUser == null) {
-        print('Error: FirebaseAuth.currentUser is null');
         throw Exception('Failed to create user');
       }
 
-      print('User created with UID: ${firebaseUser.uid}');
       UserModel user = UserModel(
         uid: firebaseUser.uid,
         email: email,
@@ -60,20 +70,15 @@ class AuthCubit extends Cubit<AuthState> {
         purchases: [],
       );
 
-      print('Saving user data to Realtime Database: ${user.toMap()}');
       await _database
           .child('users')
           .child(firebaseUser.uid)
           .set(user.toMap());
 
-      // Проверка, что данные сохранены
-      DataSnapshot snapshot = await _database.child('users').child(firebaseUser.uid).get();
-      if (!snapshot.exists) {
-        throw Exception('Failed to save user data');
-      }
-
-      print('User data saved successfully');
-      emit(state.copyWith(user: user, isLoading: false));
+      emit(state.copyWith(
+        user: user,
+        status: AuthStatus.authenticated,
+      ));
     } on FirebaseAuthException catch (e) {
       String errorMessage;
       switch (e.code) {
@@ -84,23 +89,29 @@ class AuthCubit extends Cubit<AuthState> {
           errorMessage = 'Некорректный email';
           break;
         case 'weak-password':
-          errorMessage = 'Пароль слишком слабый';
+          errorMessage = 'Пароль слишком слабый (минимум 6 символов)';
+          break;
+        case 'operation-not-allowed':
+          errorMessage = 'Регистрация с email/password отключена';
           break;
         default:
           errorMessage = 'Ошибка регистрации: ${e.message}';
       }
-      print('FirebaseAuthException: $errorMessage');
-      emit(state.copyWith(error: errorMessage, isLoading: false));
-    } catch (e, stackTrace) {
-      print('Unexpected error during registration: $e\nStackTrace: $stackTrace');
-      emit(state.copyWith(error: 'Ошибка регистрации: $e', isLoading: false));
+      emit(state.copyWith(
+        error: errorMessage,
+        status: AuthStatus.error,
+      ));
+    } catch (e) {
+      emit(state.copyWith(
+        error: 'Неизвестная ошибка: $e',
+        status: AuthStatus.error,
+      ));
     }
   }
 
   Future<void> login(String email, String password) async {
-    emit(state.copyWith(isLoading: true, error: ''));
+    emit(state.copyWith(status: AuthStatus.loading, error: ''));
     try {
-      print('Starting login for email: $email');
       UserCredential credential = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
@@ -108,53 +119,62 @@ class AuthCubit extends Cubit<AuthState> {
 
       final firebaseUser = credential.user;
       if (firebaseUser == null) {
-        print('Error: FirebaseAuth.currentUser is null');
-        throw Exception('Failed to login user');
+        throw Exception('Не удалось войти в систему');
       }
 
-      print('User logged in with UID: ${firebaseUser.uid}');
       DataSnapshot snapshot = await _database
           .child('users')
           .child(firebaseUser.uid)
           .get();
 
       if (!snapshot.exists || snapshot.value == null) {
-        print('Error: User data not found in Realtime Database');
         throw Exception('Данные пользователя не найдены');
       }
 
-      print('Raw snapshot value: ${snapshot.value}');
       final Map<dynamic, dynamic> rawData = snapshot.value as Map<dynamic, dynamic>;
       final Map<String, dynamic> userData = rawData.map((key, value) => MapEntry(key.toString(), value));
 
       UserModel user = UserModel.fromMap(userData);
-      print('User data loaded: ${user.email}');
-      // Проверяем, не является ли это автоматическим логином после регистрации
-      if (state.user == null || state.user!.uid != user.uid) {
-        emit(state.copyWith(user: user, isLoading: false));
-      } else {
-        print('Skipping emit: User already authenticated');
-        emit(state.copyWith(isLoading: false));
-      }
+      emit(state.copyWith(
+        user: user,
+        status: AuthStatus.authenticated,
+      ));
     } on FirebaseAuthException catch (e) {
       String errorMessage;
       switch (e.code) {
         case 'user-not-found':
-          errorMessage = 'Пользователь не найден';
+          errorMessage = 'Пользователь с таким email не найден';
           break;
         case 'wrong-password':
-          errorMessage = 'Неверный пароль';
+          errorMessage = 'Неверный пароль. Пожалуйста, попробуйте снова';
+          break;
+        case 'invalid-email':
+          errorMessage = 'Некорректный формат email';
+          break;
+        case 'user-disabled':
+          errorMessage = 'Этот аккаунт был заблокирован';
+          break;
+        case 'too-many-requests':
+          errorMessage = 'Слишком много попыток входа. Попробуйте позже';
+          break;
+        case 'invalid-credential':
+          errorMessage = 'Неверный email или пароль';
           break;
         default:
-          errorMessage = 'Ошибка входа: ${e.message}';
+          errorMessage = 'Ошибка входа: ${e.message ?? "Неизвестная ошибка"}';
       }
-      print('FirebaseAuthException: $errorMessage');
-      emit(state.copyWith(error: errorMessage, isLoading: false));
-    } catch (e, stackTrace) {
-      print('Unexpected error during login: $e\nStackTrace: $stackTrace');
-      emit(state.copyWith(error: e.toString(), isLoading: false));
+      emit(state.copyWith(
+        error: errorMessage,
+        status: AuthStatus.error,
+      ));
+    } catch (e) {
+      emit(state.copyWith(
+        error: 'Произошла ошибка при входе: ${e.toString()}',
+        status: AuthStatus.error,
+      ));
     }
   }
+
 
   Future<void> saveQuestAnswer(String uid, int questionIndex, String answer) async {
     try {
@@ -210,7 +230,7 @@ class AuthCubit extends Cubit<AuthState> {
 
   Future<void> uploadAvatar(XFile image) async {
     try {
-      emit(state.copyWith(isLoading: true, error: ''));
+      emit(state.copyWith(status: AuthStatus.loading, error: ''));
       final uid = state.user?.uid;
       if (uid == null) {
         throw Exception('User not logged in');
@@ -230,12 +250,15 @@ class AuthCubit extends Cubit<AuthState> {
 
       emit(state.copyWith(
         user: state.user?.copyWith(avatarUrl: avatarPath),
-        isLoading: false,
+        status: AuthStatus.authenticated,
       ));
       print('Avatar saved locally: $avatarPath');
     } catch (e, stackTrace) {
       print('Error saving avatar: $e\nStackTrace: $stackTrace');
-      emit(state.copyWith(error: 'Ошибка сохранения аватара: $e', isLoading: false));
+      emit(state.copyWith(
+        error: 'Ошибка сохранения аватара: $e',
+        status: AuthStatus.error,
+      ));
     }
   }
 

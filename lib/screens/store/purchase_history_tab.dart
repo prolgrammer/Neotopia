@@ -70,22 +70,38 @@ class PurchaseHistoryTab extends StatelessWidget {
                       SizedBox(width: 8),
                       Expanded(
                         flex: 3,
-                        child: Text(
-                          '${item.name} - ${item.price} 🪙',
-                          style: TextStyle(fontSize: 16),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                        child: Row(
+                          children: [
+                            Text(
+                              '${item.name} - ${item.price} ',
+                              style: TextStyle(fontSize: 16),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Image.asset(
+                              'assets/images/neocoins.png',
+                              height: 16,
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
                 )),
                 SizedBox(height: 8),
-                Text(
-                  'Итого: ${purchase.totalPrice} 🪙',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                Row(
+                  children: [
+                    Text(
+                      'Итого: ${purchase.totalPrice} ',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Image.asset(
+                      'assets/images/neocoins.png',
+                      height: 16,
+                    ),
+                  ],
                 ),
                 SizedBox(height: 8),
                 Text(

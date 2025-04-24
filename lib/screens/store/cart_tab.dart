@@ -5,7 +5,6 @@ import '../../models/merch_model.dart';
 import '../constants.dart';
 import './image_preview_screen.dart';
 import './main_card.dart';
-import './top_notification.dart';
 
 class CartTab extends StatelessWidget {
   final Map<MerchItem, int> cart;
@@ -24,6 +23,8 @@ class CartTab extends StatelessWidget {
         ),
       );
     }
+
+    final totalPrice = cart.entries.fold(0, (sum, entry) => sum + entry.key.price * entry.value);
 
     return Column(
       children: [
@@ -81,11 +82,32 @@ class CartTab extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                             SizedBox(height: 8),
-                            Text(
-                              'Цена: ${item.price} 🪙 x $quantity = ${item.price * quantity} 🪙',
-                              style: TextStyle(fontSize: 16),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Цена: ${item.price}',
+                                  style: TextStyle(fontSize: 15),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Text(
+                                      'x $quantity = ${item.price * quantity}',
+                                      style: TextStyle(fontSize: 15),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    SizedBox(width: 4),
+                                    Image.asset(
+                                      'assets/images/neocoins.png',
+                                      height: 15,
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -110,18 +132,32 @@ class CartTab extends StatelessWidget {
                             onPressed: quantity < 99
                                 ? () {
                               final userCoins = context.read<AuthCubit>().state.user?.coins ?? 0;
-                              final totalAfterAdd = cart.entries.fold(0, (sum, entry) =>
-                              sum + entry.key.price * entry.value) + item.price;
+                              final totalAfterAdd = cart.entries.fold(
+                                  0, (sum, entry) => sum + entry.key.price * entry.value) +
+                                  item.price;
 
                               if (userCoins >= totalAfterAdd) {
                                 final updatedCart = Map<MerchItem, int>.from(cart);
                                 updatedCart[item] = quantity + 1;
                                 onUpdateCart(updatedCart);
                               } else {
-                                TopNotification.show(
-                                  context,
-                                  message: 'Недостаточно монет',
-                                  isError: true,
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Row(
+                                      children: [
+                                        Icon(Icons.error_outline, color: Colors.white),
+                                        SizedBox(width: 8),
+                                        Expanded(
+                                            child: Text('Недостаточно монет',
+                                                style: TextStyle(color: Colors.white))),
+                                      ],
+                                    ),
+                                    backgroundColor: Colors.redAccent,
+                                    behavior: SnackBarBehavior.floating,
+                                    margin: EdgeInsets.all(16),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                    duration: Duration(seconds: 3),
+                                  ),
                                 );
                               }
                             }
@@ -138,13 +174,40 @@ class CartTab extends StatelessWidget {
         ),
         Padding(
           padding: EdgeInsets.all(16),
-          child: ElevatedButton(
-            onPressed: () => onPurchase(context),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              minimumSize: Size(double.infinity, 48),
-            ),
-            child: Text('Купить'),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Итого: $totalPrice',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(width: 4),
+                  Image.asset(
+                    'assets/images/neocoins.png',
+                    height: 18,
+                  ),
+                ],
+              ),
+              SizedBox(height: 8),
+              ElevatedButton(
+                onPressed: () => onPurchase(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.black,
+                  minimumSize: Size(double.infinity, 48),
+                ),
+                child: Text(
+                  'Купить',
+                  style: TextStyle(color: Colors.black),
+                ),
+              ),
+            ],
           ),
         ),
       ],

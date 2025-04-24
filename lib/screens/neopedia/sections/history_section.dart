@@ -62,6 +62,11 @@ class HistorySection extends StatelessWidget {
                             'В 2023 году компания расширила направления: появились центры компетенций по видеоаналитике, BI-решениям, нагрузочному тестированию и разработке в Yandex Cloud. В 2024 году численность сотрудников превысила 1400 человек, а рост ключевых финансовых показателей составил более 25%. Были представлены новые продукты: Neoflex Reporting Risk, Neoflex Foundation, Reporting Studio и NEOMSA APIM.',
                         style: TextStyle(fontSize: 16, color: Colors.white),
                       ),
+                      SizedBox(height: 16),
+                      Image.asset(
+                        'assets/images/neotopia/history.png',
+                        fit: BoxFit.contain,
+                      ),
                     ],
                   ),
                 ),

@@ -30,6 +30,8 @@ class CartScreen extends StatelessWidget {
       );
     }
 
+    final totalPrice = cart.entries.fold(0, (sum, entry) => sum + entry.key.price * entry.value);
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Корзина'),
@@ -94,11 +96,32 @@ class CartScreen extends StatelessWidget {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 SizedBox(height: 8),
-                                Text(
-                                  'Цена: ${item.price} 🪙 x $quantity = ${item.price * quantity} 🪙',
-                                  style: TextStyle(fontSize: 16),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Цена: ${item.price}',
+                                      style: TextStyle(fontSize: 15),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    SizedBox(height: 4),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          'x $quantity = ${item.price * quantity}',
+                                          style: TextStyle(fontSize: 15),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        SizedBox(width: 4),
+                                        Image.asset(
+                                          'assets/images/neocoins.png',
+                                          height: 15,
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
@@ -147,29 +170,52 @@ class CartScreen extends StatelessWidget {
             ),
             Padding(
               padding: EdgeInsets.all(16),
-              child: ElevatedButton(
-                onPressed: () {
-                  if (cart.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Корзина пуста!'),
-                        backgroundColor: Colors.red,
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Итого: $totalPrice',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    );
-                  } else {
-                    onPurchase(context);
-                    Navigator.pop(context);
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                  minimumSize: Size(double.infinity, 48),
-                ),
-                child: Text(
-                  'Купить',
-                  style: TextStyle(color: Colors.white),
-                ),
+                      SizedBox(width: 4),
+                      Image.asset(
+                        'assets/images/neocoins.png',
+                        height: 18,
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 8),
+                  ElevatedButton(
+                    onPressed: () {
+                      if (cart.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Корзина пуста!'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      } else {
+                        onPurchase(context);
+                        Navigator.pop(context);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black,
+                      minimumSize: Size(double.infinity, 48),
+                    ),
+                    child: Text(
+                      'Купить',
+                      style: TextStyle(color: Colors.black),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

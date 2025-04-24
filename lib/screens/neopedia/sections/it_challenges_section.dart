@@ -58,6 +58,11 @@ class ITChallengesSection extends StatelessWidget {
                         'Neoflex активно применяет подход Service-Oriented Architecture (SOA) для интеграции различных информационных систем. Платформа Neoflex Datagram способна обрабатывать все типы данных: структурированные, неструктурированные и полуструктурированные. В сфере работы с большими данными компания использует технологии Hadoop и Spark. Для автоматизации отчетности перед Центральным банком России применяется решение Neoflex Reporting, а для генерации кода в рамках платформы Datagram используется язык программирования Scala.',
                         style: TextStyle(fontSize: 16, color: Colors.white),
                       ),
+                      SizedBox(height: 16),
+                      Image.asset(
+                        'assets/images/neotopia/technology.png',
+                        fit: BoxFit.contain,
+                      ),
                     ],
                   ),
                 ),

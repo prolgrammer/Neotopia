@@ -58,6 +58,11 @@ class DigitalAcceleratorsSection extends StatelessWidget {
                         'Цифровая трансформация, по мнению Neoflex, заключается в создании IT-платформ, способных адаптироваться под нужды бизнеса. Для поддержки банков в сфере продаж компания разработала продукт Neoflex FrontOffice. Для обработки потоковых данных применяется технология FastData. Кроме того, Neoflex активно продвигает микросервисную архитектуру как оптимальный подход к построению современных IT-решений.',
                         style: TextStyle(fontSize: 16, color: Colors.white),
                       ),
+                      SizedBox(height: 16),
+                      Image.asset(
+                        'assets/images/neotopia/accel.png',
+                        fit: BoxFit.contain,
+                      ),
                     ],
                   ),
                 ),

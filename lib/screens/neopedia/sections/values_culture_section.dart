@@ -58,6 +58,11 @@ class ValuesCultureSection extends StatelessWidget {
                         'В центре внимания Neoflex всегда находятся клиенты — это главная ценность компании. В своей работе она придерживается гибкого подхода Agile и активно внедряет методологию Scrum. Neoflex заботится о своих сотрудниках, предоставляя возможности для обучения, удаленной работы и другие формы поддержки. Ключевым принципом в реализации проектов является высокое качество.',
                         style: TextStyle(fontSize: 16, color: Colors.white),
                       ),
+                      SizedBox(height: 16),
+                      Image.asset(
+                        'assets/images/neotopia/culture.png',
+                        fit: BoxFit.contain,
+                      ),
                     ],
                   ),
                 ),

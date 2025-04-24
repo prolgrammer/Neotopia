@@ -58,6 +58,11 @@ class ClientsProjectsSection extends StatelessWidget {
                         'Решения компании Neoflex используются в 18 странах мира. Среди ее клиентов — такие известные организации, как UniCredit Bank и ТрансКапиталБанк. Также компания разработала специализированный центр планирования для логистической отрасли. Один из крупных агрохолдингов, название которого не разглашается, использует решения Neoflex на базе Big Data.',
                         style: TextStyle(fontSize: 16, color: Colors.white),
                       ),
+                      SizedBox(height: 16),
+                      Image.asset(
+                        'assets/images/neotopia/clients.png',
+                        fit: BoxFit.contain,
+                      ),
                     ],
                   ),
                 ),

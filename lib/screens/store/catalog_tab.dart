@@ -24,7 +24,7 @@ class CatalogTab extends StatelessWidget {
       MerchItem(id: '6', name: 'Колонка беспроводная', price: 1000, imageUrl: 'assets/images/merch/music_speaker1.png'),
       MerchItem(id: '7', name: 'Блокнот', price: 300, imageUrl: 'assets/images/merch/notepad.png'),
       MerchItem(id: '8', name: 'Ручка', price: 100, imageUrl: 'assets/images/merch/pencil.png'),
-      MerchItem(id: '9', name: 'Косметичка', price: 400, imageUrl: 'assets/images/merch/pouch.png'),
+      MerchItem(id: '9', name: 'Мешочек', price: 400, imageUrl: 'assets/images/merch/pouch.png'),
     ];
 
     return ListView.builder(
@@ -101,16 +101,25 @@ class CatalogTab extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                       SizedBox(height: 8),
-                      Text(
-                        'Цена: ${item.price} 🪙',
-                        style: TextStyle(fontSize: 16),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      Row(
+                        children: [
+                          Text(
+                            'Цена: ${item.price} ',
+                            style: TextStyle(fontSize: 16),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Image.asset(
+                            'assets/images/neocoins.png',
+                            height: 16,
+                          ),
+                        ],
                       ),
-                      if (currentQuantity > 0) Text(
-                        'В корзине: $currentQuantity',
-                        style: TextStyle(fontSize: 14, color: Colors.green),
-                      ),
+                      if (currentQuantity > 0)
+                        Text(
+                          'В корзине: $currentQuantity',
+                          style: TextStyle(fontSize: 14, color: Colors.green),
+                        ),
                     ],
                   ),
                 ),

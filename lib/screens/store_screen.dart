@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:neotopia/screens/store/catalog_tab.dart';
 import 'package:neotopia/screens/store/purchase_history_tab.dart';
 import 'package:neotopia/screens/store/cart_tab.dart';
-import 'package:neotopia/screens/store/top_notification.dart';
 import '../cubits/auth_cubit.dart';
 import '../models/merch_model.dart';
 import '../models/user_model.dart';
@@ -30,6 +29,25 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  void _showSnackBar(BuildContext context, String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(isError ? Icons.error_outline : Icons.check_circle, color: Colors.white),
+            SizedBox(width: 8),
+            Expanded(child: Text(message, style: TextStyle(color: Colors.white))),
+          ],
+        ),
+        backgroundColor: isError ? Colors.redAccent : Colors.green,
+        behavior: SnackBarBehavior.floating,
+        margin: EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        duration: Duration(seconds: 3),
+      ),
+    );
   }
 
   @override
@@ -84,13 +102,17 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                           height: 24,
                         ),
                         SizedBox(width: 4),
-                        Text(
-                          '${context.watch<AuthCubit>().state.user?.coins ?? 0}',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        BlocBuilder<AuthCubit, AuthState>(
+                          builder: (context, state) {
+                            return Text(
+                              '${state.user?.coins ?? 0}',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -186,16 +208,27 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
 
   void _addToCart(MerchItem item) {
     final user = context.read<AuthCubit>().state.user;
-    if (user == null) return;
+    if (user == null) {
+      _showSnackBar(context, 'Ошибка: Пользователь не найден', isError: true);
+      return;
+    }
 
     final currentQuantity = cart[item] ?? 0;
-    final totalAfterAdd = cart.entries.fold(0, (sum, entry) =>
-    sum + entry.key.price * entry.value) + item.price;
+    final totalAfterAdd =
+        cart.entries.fold(0, (sum, entry) => sum + entry.key.price * entry.value) + item.price;
 
     if (user.coins >= totalAfterAdd && currentQuantity < 99) {
       setState(() {
         cart[item] = currentQuantity + 1;
       });
+    } else {
+      _showSnackBar(
+        context,
+        currentQuantity >= 99
+            ? 'Достигнут лимит количества для ${item.name}'
+            : 'Недостаточно монет для добавления ${item.name}',
+        isError: true,
+      );
     }
   }
 
@@ -210,30 +243,18 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
     final user = authCubit.state.user;
 
     if (user == null) {
-      TopNotification.show(
-        context,
-        message: 'Ошибка: Пользователь не найден',
-        isError: true,
-      );
+      _showSnackBar(context, 'Ошибка: Пользователь не найден', isError: true);
       return;
     }
 
     if (cart.isEmpty) {
-      TopNotification.show(
-        context,
-        message: 'Корзина пуста',
-        isError: true,
-      );
+      _showSnackBar(context, 'Корзина пуста', isError: true);
       return;
     }
 
     final totalPrice = cart.entries.fold(0, (sum, entry) => sum + entry.key.price * entry.value);
     if (user.coins < totalPrice) {
-      TopNotification.show(
-        context,
-        message: 'Недостаточно монет для покупки',
-        isError: true,
-      );
+      _showSnackBar(context, 'Недостаточно монет для покупки', isError: true);
       return;
     }
 
@@ -255,16 +276,9 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
         cart.clear();
       });
 
-      TopNotification.show(
-        context,
-        message: 'Покупка успешна! Приходите к нам в офис в будние дни, и мы выдадим вам ваш приз.',
-      );
+      _showSnackBar(context, 'Покупка успешна! Приходите к нам в офис в будние дни, и мы выдадим вам ваш приз.');
     } catch (e) {
-      TopNotification.show(
-        context,
-        message: 'Ошибка при покупке',
-        isError: true,
-      );
+      _showSnackBar(context, 'Ошибка при покупке', isError: true);
     }
   }
 }
