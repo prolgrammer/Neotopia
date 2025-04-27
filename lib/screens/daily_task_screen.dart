@@ -86,6 +86,45 @@ class _DailyTasksScreenState extends State<DailyTasksScreen> {
     }
   }
 
+  Future<void> _refreshDailyTasks() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    final authCubit = context.read<AuthCubit>();
+    if (authCubit.state.user == null) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Пожалуйста, войдите в аккаунт';
+      });
+      return;
+    }
+
+    final uid = authCubit.state.user!.uid;
+    try {
+      final now = DateTime.now().toUtc().add(Duration(hours: 3));
+      final dateKey = DateFormat('yyyy-MM-dd').format(now);
+      _dailyTasks = _generateDailyTasks();
+      final tasksMap = {
+        'task1': _dailyTasks[0].toMap(),
+        'task2': _dailyTasks[1].toMap(),
+      };
+      await _database.child('daily_tasks').child(dateKey).set(tasksMap);
+      await _updateTaskCompletionStatus(uid, dateKey);
+      print('Daily tasks refreshed: ${_dailyTasks.map((t) => t.id).toList()}');
+    } catch (e) {
+      print('Error refreshing daily tasks: $e');
+      setState(() {
+        _errorMessage = 'Ошибка обновления заданий: $e';
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
   Future<void> _updateTaskCompletionStatus(String uid, String dateKey) async {
     try {
       final progressSnapshot = await _database
@@ -123,7 +162,6 @@ class _DailyTasksScreenState extends State<DailyTasksScreen> {
     final now = DateTime.now().toUtc().add(Duration(hours: 3));
     final dateKey = DateFormat('yyyy-MM-dd').format(now);
 
-    // Отписываемся от предыдущей подписки, если она есть
     _taskProgressSubscription?.cancel();
 
     _taskProgressSubscription = _database
@@ -157,7 +195,7 @@ class _DailyTasksScreenState extends State<DailyTasksScreen> {
 
   @override
   void dispose() {
-    _taskProgressSubscription?.cancel(); // Отписываемся от слушателя
+    _taskProgressSubscription?.cancel();
     super.dispose();
   }
 
@@ -213,7 +251,7 @@ class _DailyTasksScreenState extends State<DailyTasksScreen> {
         return;
     }
 
-    if (mounted && context.read<AuthCubit>().state.user != null) {
+    if (mounted && context.read<AuthCubit>(). state.user != null) {
       final now = DateTime.now().toUtc().add(Duration(hours: 3));
       final dateKey = DateFormat('yyyy-MM-dd').format(now);
       await _updateTaskCompletionStatus(context.read<AuthCubit>().state.user!.uid, dateKey);
@@ -224,19 +262,17 @@ class _DailyTasksScreenState extends State<DailyTasksScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(gradient: kAppGradient), // Используем тот же градиент
+        decoration: BoxDecoration(gradient: kAppGradient),
         child: Stack(
           children: [
             SafeArea(
               child: Column(
                 children: [
-                  // Верхняя плашка (как в QuestCatalogScreen)
                   Container(
                     padding: EdgeInsets.all(16),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // Аватар и ник
                         Row(
                           children: [
                             BlocBuilder<AuthCubit, AuthState>(
@@ -264,12 +300,10 @@ class _DailyTasksScreenState extends State<DailyTasksScreen> {
                             ),
                           ],
                         ),
-                        // Логотип Neotopia
                         Image.asset(
                           'assets/images/neotopia.png',
                           height: 40,
                         ),
-                        // Монеты
                         Row(
                           children: [
                             Image.asset(
@@ -294,25 +328,40 @@ class _DailyTasksScreenState extends State<DailyTasksScreen> {
                       ],
                     ),
                   ),
-                  // Белая полоска
                   Divider(
                     color: Colors.white,
                     thickness: 2,
                     height: 1,
                   ),
-                  // Заголовок "Ежедневные задания"
                   Padding(
                     padding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                    child: Text(
-                      'Ежедневные задания',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Flexible( // Wrap Text in Flexible to prevent overflow
+                          child: Text(
+                            'Ежедневные задания',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            overflow: TextOverflow.ellipsis, // Handle long text gracefully
+                          ),
+                        ),
+                        ElevatedButton(
+                          onPressed: _refreshDailyTasks,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: Color(0xFF4A1A7A),
+                            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4), // Reduce padding
+                            textStyle: TextStyle(fontSize: 14), // Smaller font for button
+                          ),
+                          child: Text('Обновить'),
+                        ),
+                      ],
                     ),
                   ),
-                  // Основное содержимое
                   Expanded(
                     child: _isLoading
                         ? Center(
@@ -465,7 +514,6 @@ class _DailyTasksScreenState extends State<DailyTasksScreen> {
                 ],
               ),
             ),
-            // Кнопка "Домой" (как в QuestCatalogScreen)
             Positioned(
               bottom: 52,
               left: 0,
@@ -483,11 +531,11 @@ class _DailyTasksScreenState extends State<DailyTasksScreen> {
                       color: Colors.white,
                       border: Border.all(color: Color(0xFF4A1A7A), width: 1),
                       boxShadow: [
-                      BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 4,
-                      offset: Offset(0, 2),
-                      )],
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 4,
+                          offset: Offset(0, 2),
+                        )],
                     ),
                     child: Center(
                       child: Image.asset(

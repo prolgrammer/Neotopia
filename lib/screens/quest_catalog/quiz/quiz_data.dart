@@ -166,8 +166,8 @@ final List<DailyTask> quizTasks = [
     id: 'quiz_culture',
     category: 'Quiz',
     title: 'Культурный код',
-    description: 'Как хорошо ты знаешь культуру Neoflex? Ответь на 2 вопроса о наших ценностях!',
-    goal: 'Ответить правильно на 2 вопроса о культуре Neoflex.',
+    description: 'Как хорошо ты знаешь культуру Neoflex? Ответь на 1 вопрос о наших ценностях!',
+    goal: 'Ответить правильно на 1 вопрос о культуре Neoflex.',
     rewardCoins: 5,
   ),
 ];

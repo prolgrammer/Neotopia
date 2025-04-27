@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart' as intl;
+import 'package:firebase_database/firebase_database.dart';
 import '../../../../cubits/auth_cubit.dart';
 import '../../../../cubits/game_cubit.dart';
 import '../../../../models/daily_task_model.dart';
@@ -30,6 +31,9 @@ class _NeoCoderScreenState extends State<NeoCoderScreen> with TickerProviderStat
   bool hasChecked = false;
   String errorMessage = '';
   List<DailyTask> _dailyTasks = [];
+  final Map<String, bool> _taskCompletionStatus = {};
+  final DatabaseReference _database = FirebaseDatabase.instance.ref();
+  final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
   @override
   void initState() {
@@ -40,10 +44,34 @@ class _NeoCoderScreenState extends State<NeoCoderScreen> with TickerProviderStat
   }
 
   Future<void> _loadDailyTasks() async {
-    setState(() {
-      _dailyTasks = coderData.coderTasks;
-      print('Loaded coder tasks: ${_dailyTasks.map((t) => t.id).toList()}');
-    });
+    final now = DateTime.now().toUtc().add(const Duration(hours: 3));
+    final dateKey = intl.DateFormat('yyyy-MM-dd').format(now);
+    try {
+      final snapshot = await _database.child('daily_tasks').child(dateKey).get();
+      if (snapshot.exists && snapshot.value != null) {
+        final data = snapshot.value as Map<dynamic, dynamic>;
+        print('Firebase daily_tasks/$dateKey data: $data');
+        setState(() {
+          _dailyTasks = data.values
+              .map((task) => DailyTask.fromMap(Map<String, dynamic>.from(task)))
+              .where((task) => task.category == 'Coder')
+              .toList();
+          print('Loaded daily coder tasks: ${_dailyTasks.map((t) => t.id).toList()}');
+        });
+      } else {
+        print('No daily tasks found for $dateKey, falling back to coderData.coderTasks');
+        setState(() {
+          _dailyTasks = coderData.coderTasks;
+          print('Fallback daily coder tasks: ${_dailyTasks.map((t) => t.id).toList()}');
+        });
+      }
+    } catch (e) {
+      print('Error loading daily tasks: $e, falling back to coderData.coderTasks');
+      setState(() {
+        _dailyTasks = coderData.coderTasks;
+        print('Fallback daily coder tasks: ${_dailyTasks.map((t) => t.id).toList()}');
+      });
+    }
   }
 
   void _initializeCode() {
@@ -117,7 +145,7 @@ class _NeoCoderScreenState extends State<NeoCoderScreen> with TickerProviderStat
       orElse: () => DailyTask(id: '', category: '', title: '', description: '', goal: '', rewardCoins: 0),
     );
     if (task.id.isEmpty) {
-      print('Task $taskId not found in daily tasks');
+      print('Task $taskId not found in today\'s daily tasks');
       return false;
     }
 
@@ -139,6 +167,10 @@ class _NeoCoderScreenState extends State<NeoCoderScreen> with TickerProviderStat
   }
 
   void _showTaskNotification(String taskId) {
+    if (!mounted) {
+      print('Widget not mounted, skipping notification for $taskId');
+      return;
+    }
     final task = _dailyTasks.firstWhere(
           (t) => t.id == taskId,
       orElse: () => DailyTask(id: '', category: '', title: '', description: '', goal: '', rewardCoins: 0),
@@ -147,24 +179,53 @@ class _NeoCoderScreenState extends State<NeoCoderScreen> with TickerProviderStat
       print('No task found for $taskId, skipping notification');
       return;
     }
-    if (mounted) {
-      print('Showing SnackBar for $taskId');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Задание выполнено! ${task.title}\nНаграда: ${task.rewardCoins} 🪙',
-            style: const TextStyle(color: Colors.white),
-          ),
-          backgroundColor: const Color(0xFF2E0352),
-          duration: const Duration(seconds: 3),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          margin: const EdgeInsets.all(16),
+    print('Attempting to show SnackBar for $taskId with title: ${task.title}');
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle, color: Colors.white, size: 24),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Задание выполнено!',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                  Text(task.title, style: const TextStyle(color: Colors.white)),
+                  Row(
+                    children: [
+                      const Text('Награда: ', style: TextStyle(color: Colors.white)),
+                      Text('${task.rewardCoins}', style: const TextStyle(color: Colors.amber)),
+                      const SizedBox(width: 4),
+                      Image.asset(
+                        'assets/images/neocoins.png',
+                        width: 20,
+                        height: 20,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) {
+                          print('Error loading neocoins.png: $error');
+                          return const Icon(Icons.error, color: Colors.red, size: 20);
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-      );
-    }
+        backgroundColor: const Color(0xFF2E0352),
+        duration: const Duration(seconds: 7),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
   }
 
   void _checkCode() {
@@ -210,7 +271,7 @@ class _NeoCoderScreenState extends State<NeoCoderScreen> with TickerProviderStat
       setState(() {
         hasChecked = true;
         errorMessage = 'Ошибка в коде:\n- ${errors.join('\n- ')}';
-        ScaffoldMessenger.of(context).showSnackBar(
+        _scaffoldMessengerKey.currentState?.showSnackBar(
           SnackBar(
             content: Text(errorMessage, style: const TextStyle(color: Colors.white)),
             backgroundColor: const Color(0xFF2E0352),
@@ -258,19 +319,22 @@ class _NeoCoderScreenState extends State<NeoCoderScreen> with TickerProviderStat
         CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
       );
 
-      hasChecked = true;
       final twoPi = 2 * 3.14159;
       final rotationNormalized = rotationEnd.abs() / twoPi;
       final isRotationCorrect = rotationEnd != 0 && (rotationNormalized - rotationNormalized.roundToDouble()).abs() < 0.001;
       isCorrect = curveCorrect && isRotationCorrect && (scaleEnd - 1.5).abs() < 0.001;
 
       if (!hasChecked && isCorrect) {
-        _checkTask('coder_correct').then((success) {
-          if (success) {
-            _showTaskNotification('coder_correct');
+        _checkTask('coder_perfect').then((success) {
+          if (success && mounted) {
+            print('Triggering notification for coder_perfect');
+            _showTaskNotification('coder_perfect');
+            _taskCompletionStatus['coder_perfect'] = true;
           }
         });
       }
+
+      hasChecked = true;
 
       _animationController.reset();
       _errorController.reset();
@@ -279,13 +343,23 @@ class _NeoCoderScreenState extends State<NeoCoderScreen> with TickerProviderStat
         _animationController.forward().then((_) {
           setState(() {
             isGameOver = true;
+            // Показываем уведомление после рендера NeoCoderResult
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              // Проверяем, не было ли уже выполнено coder_rotation
+              if (!_taskCompletionStatus.containsKey('coder_rotation') || !_taskCompletionStatus['coder_rotation']!) {
+                _checkTask('coder_rotation').then((success) {
+                  if (success && mounted) {
+                    print('Triggering notification for coder_rotation');
+                    _showTaskNotification('coder_rotation');
+                    _taskCompletionStatus['coder_rotation'] = true;
+                  }
+                });
+              } else {
+                print('coder_rotation already completed, skipping');
+              }
+            });
           });
           context.read<GameCubit>().addCoins(coinsForCompletion);
-          _checkTask('coder_complete').then((success) {
-            if (success) {
-              _showTaskNotification('coder_complete');
-            }
-          });
         });
       } else {
         _animationController.forward().then((_) {
@@ -294,7 +368,7 @@ class _NeoCoderScreenState extends State<NeoCoderScreen> with TickerProviderStat
             _errorController.reset();
           });
           errorMessage = 'Ошибка! Анимация должна вращать маскота ровно на 360° (используй 2 * 3.14159 или ~6.28318) и увеличивать в 1.5 раза. Попробуй снова!';
-          ScaffoldMessenger.of(context).showSnackBar(
+          _scaffoldMessengerKey.currentState?.showSnackBar(
             SnackBar(
               content: Text(errorMessage, style: const TextStyle(color: Colors.white)),
               backgroundColor: const Color(0xFF2E0352),
@@ -329,6 +403,7 @@ class _NeoCoderScreenState extends State<NeoCoderScreen> with TickerProviderStat
     }
 
     return Scaffold(
+      key: _scaffoldMessengerKey,
       appBar: AppBar(
         title: const Text('Нео-Кодер: Анимируй Маскота!'),
         backgroundColor: const Color(0xFF2E0352),

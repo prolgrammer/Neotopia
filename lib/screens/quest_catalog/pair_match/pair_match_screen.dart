@@ -9,6 +9,7 @@ import '../../constants.dart';
 import 'pair_match_data.dart' as pairData;
 import 'pair_match_widgets.dart';
 import 'pair_match_result.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 class PairMatchScreen extends StatefulWidget {
   const PairMatchScreen({super.key});
@@ -32,6 +33,7 @@ class _PairMatchScreenState extends State<PairMatchScreen> with TickerProviderSt
   int matchedPairs = 0;
   List<DailyTask> _dailyTasks = [];
   final Map<String, bool> _taskCompletionStatus = {};
+  final DatabaseReference _database = FirebaseDatabase.instance.ref();
 
   @override
   void initState() {
@@ -41,10 +43,28 @@ class _PairMatchScreenState extends State<PairMatchScreen> with TickerProviderSt
   }
 
   Future<void> _loadDailyTasks() async {
-    setState(() {
-      _dailyTasks = pairData.pairTasks;
-      print('Loaded pair tasks: ${_dailyTasks.map((t) => t.id).toList()}');
-    });
+    final now = DateTime.now().toUtc().add(const Duration(hours: 3));
+    final dateKey = intl.DateFormat('yyyy-MM-dd').format(now);
+    try {
+      final snapshot = await _database.child('daily_tasks').child(dateKey).get();
+      if (snapshot.exists && snapshot.value != null) {
+        final data = snapshot.value as Map<dynamic, dynamic>;
+        setState(() {
+          _dailyTasks = data.values
+              .map((task) => DailyTask.fromMap(Map<String, dynamic>.from(task)))
+              .where((task) => task.category == 'Pairs')
+              .toList();
+          print('Loaded daily pair tasks: ${_dailyTasks.map((t) => t.id).toList()}');
+        });
+      } else {
+        setState(() {
+          _dailyTasks = [];
+          print('No daily tasks found for $dateKey');
+        });
+      }
+    } catch (e) {
+      print('Error loading daily tasks: $e');
+    }
   }
 
   void _initializeGame() {
@@ -119,6 +139,7 @@ class _PairMatchScreenState extends State<PairMatchScreen> with TickerProviderSt
         _resetSelection();
         if (cards.every((card) => card.isMatched)) {
           print('Game over! Awarding $coinsForCompletion coins');
+          await Future.delayed(const Duration(milliseconds: 500)); // Delay to allow SnackBar to show
           setState(() {
             isGameOver = true;
           });
@@ -166,7 +187,7 @@ class _PairMatchScreenState extends State<PairMatchScreen> with TickerProviderSt
       orElse: () => DailyTask(id: '', category: '', title: '', description: '', goal: '', rewardCoins: 0),
     );
     if (task.id.isEmpty) {
-      print('Task $taskId not found in daily tasks');
+      print('Task $taskId not found in today\'s daily tasks');
       return false;
     }
 
@@ -200,19 +221,71 @@ class _PairMatchScreenState extends State<PairMatchScreen> with TickerProviderSt
       print('Showing SnackBar for $taskId');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            'Задание выполнено! ${task.title}\nНаграда: ${task.rewardCoins} 🪙',
-            style: const TextStyle(color: Colors.white),
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle, color: Colors.white, size: 32),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Задание выполнено!',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      task.title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        const Text(
+                          'Награда: ',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                          ),
+                        ),
+                        Text(
+                          '${task.rewardCoins}',
+                          style: const TextStyle(
+                            color: Colors.amber,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Image.asset(
+                          'assets/images/neocoins.png',
+                          width: 20,
+                          height: 20,
+                          fit: BoxFit.contain,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          backgroundColor: Colors.green.shade700,
+          backgroundColor: const Color(0xFF2E0352),
           duration: const Duration(seconds: 3),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
           margin: const EdgeInsets.all(16),
+          elevation: 10,
         ),
-      );
+      ).closed.then((reason) {
+        print('SnackBar for $taskId closed with reason: $reason');
+      });
     }
   }
 
@@ -229,10 +302,10 @@ class _PairMatchScreenState extends State<PairMatchScreen> with TickerProviderSt
         decoration: const BoxDecoration(gradient: kAppGradient),
         child: isGameOver
             ? PairMatchResult(
-          coinsEarned: coinsForCompletion,
-          taskCoins: _taskCompletionStatus.entries
-              .where((entry) => entry.value)
-              .fold(0, (sum, entry) => sum + (_dailyTasks.firstWhere((t) => t.id == entry.key).rewardCoins)),
+          coinsEarned: coinsForCompletion +
+              _taskCompletionStatus.entries
+                  .where((entry) => entry.value)
+                  .fold(0, (sum, entry) => sum + (_dailyTasks.firstWhere((t) => t.id == entry.key).rewardCoins)),
           onRestart: _restartGame,
           onBack: () => Navigator.pop(context),
         )

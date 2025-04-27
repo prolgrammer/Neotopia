@@ -3,22 +3,18 @@ import '../../constants.dart';
 
 class PairMatchResult extends StatelessWidget {
   final int coinsEarned;
-  final int taskCoins;
   final VoidCallback onRestart;
   final VoidCallback onBack;
 
   const PairMatchResult({
     super.key,
     required this.coinsEarned,
-    required this.taskCoins,
     required this.onRestart,
     required this.onBack,
   });
 
   @override
   Widget build(BuildContext context) {
-    final totalCoins = coinsEarned + taskCoins;
-
     return Container(
       decoration: const BoxDecoration(gradient: kAppGradient),
       child: Center(
@@ -37,7 +33,7 @@ class PairMatchResult extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                'Вы нашли все пары и заработали $totalCoins неокоинов!',
+                'Вы нашли все пары и заработали $coinsEarned неокоинов!',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 18,
@@ -49,7 +45,7 @@ class PairMatchResult extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    '+$totalCoins',
+                    '+$coinsEarned',
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -65,16 +61,6 @@ class PairMatchResult extends StatelessWidget {
                   ),
                 ],
               ),
-              if (taskCoins > 0) ...[
-                const SizedBox(height: 8),
-                Text(
-                  '(включая $taskCoins за задания)',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    color: Colors.white70,
-                  ),
-                ),
-              ],
               const SizedBox(height: 32),
               ElevatedButton(
                 onPressed: onRestart,

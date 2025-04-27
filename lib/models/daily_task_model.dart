@@ -44,15 +44,15 @@ final List<DailyTask> availableTasks = [
     category: 'Quiz',
     title: 'Эксперт Neoflex',
     description: 'Стань экспертом по Neoflex! Ответь на 5 вопросов без ошибок.',
-    goal: 'Ответить правильно на 5 вопросов викторины подряд без неверных ответов.',
+    goal: 'Ответить на все вопросы викторины правильно',
     rewardCoins: 5,
   ),
   DailyTask(
     id: 'quiz_culture',
     category: 'Quiz',
     title: 'Культурный код',
-    description: 'Как хорошо ты знаешь культуру Neoflex? Ответь на 2 вопроса о наших ценностях!',
-    goal: 'Ответить правильно на 2 вопроса о культуре Neoflex.',
+    description: 'Как хорошо ты знаешь культуру Neoflex? Ответь на 1 вопрос о наших ценностях!',
+    goal: 'Ответить правильно на 1 вопрос о культуре Neoflex. (5 вопрос)',
     rewardCoins: 5,
   ),
   // Найти пары
@@ -86,7 +86,7 @@ final List<DailyTask> availableTasks = [
     category: 'Puzzle',
     title: 'Скоростная сборка',
     description: 'Собери пазл быстрее маскота! Заверши пазл за 1 минуту.',
-    goal: 'Полностью собрать пазл за 60 секунд.',
+    goal: 'Полностью собрать пазл менеее чем за 60 секунд.',
     rewardCoins: 5,
   ),
   DailyTask(
@@ -119,7 +119,7 @@ final List<DailyTask> availableTasks = [
     category: 'Adventure',
     title: 'Мастер лабиринта',
     description: 'Найди выход из офиса Neoflex! Заверши лабиринт.',
-    goal: 'Достигнуть выхода в лабиринте (клетка E).',
+    goal: 'Достигнуть выхода в лабиринте.',
     rewardCoins: 5,
   ),
   // Нео-Кодер

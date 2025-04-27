@@ -155,7 +155,7 @@ class _QuizScreenState extends State<QuizScreen> with SingleTickerProviderStateM
         _showTaskNotification('quiz_expert');
       }
     }
-    if (cultureCorrectAnswers >= 2) {
+    if (cultureCorrectAnswers >= 1) {
       final success = await _checkTask('quiz_culture');
       if (success) {
         _showTaskNotification('quiz_culture');

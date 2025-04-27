@@ -99,6 +99,17 @@ class MainScreen extends StatelessWidget {
                   child: ListView(
                     children: [
                       MainCard(
+                        title: 'Неопедия',
+                        imagePath: 'assets/images/places/neopedia.png',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => NeopediaScreen()),
+                          );
+                        },
+                      ),
+                      SizedBox(height: 16),
+                      MainCard(
                         title: 'Ежедневные задания',
                         imagePath: 'assets/images/places/daily.png',
                         onTap: () {
@@ -114,17 +125,6 @@ class MainScreen extends StatelessWidget {
                         imagePath: 'assets/images/places/games.png',
                         onTap: () {
                           Navigator.pushNamed(context, '/quest_catalog');
-                        },
-                      ),
-                      SizedBox(height: 16),
-                      MainCard(
-                        title: 'Неопедия',
-                        imagePath: 'assets/images/places/neopedia.png',
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => NeopediaScreen()),
-                          );
                         },
                       ),
                       SizedBox(height: 16),

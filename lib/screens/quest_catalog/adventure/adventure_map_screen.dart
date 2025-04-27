@@ -127,33 +127,60 @@ class _AdventureMapScreenState extends State<AdventureMapScreen> with TickerProv
       print('Widget not mounted, skipping notification for $taskId');
       return;
     }
-    setState(() {
-      print('Adding $taskId to completed tasks');
-      _completedTasks.add(taskId);
-      _notificationControllers[taskId] = AnimationController(
-        duration: const Duration(milliseconds: 500),
-        vsync: this,
-      );
-      _notificationAnimations[taskId] = Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(parent: _notificationControllers[taskId]!, curve: Curves.easeInOut),
-      );
-      _notificationControllers[taskId]!.forward().then((_) {
-        print('Notification for $taskId shown');
-        Future.delayed(const Duration(seconds: 3), () {
-          if (mounted) {
-            print('Removing notification for $taskId');
-            _notificationControllers[taskId]!.reverse().then((_) {
-              setState(() {
-                _completedTasks.remove(taskId);
-                _notificationControllers[taskId]!.dispose();
-                _notificationControllers.remove(taskId);
-                _notificationAnimations.remove(taskId);
-              });
-            });
-          }
-        });
-      });
-    });
+    final task = _dailyTasks.firstWhere(
+          (t) => t.id == taskId,
+      orElse: () => DailyTask(id: '', category: '', title: '', description: '', goal: '', rewardCoins: 0),
+    );
+    if (task.id.isEmpty) {
+      print('Task $taskId not found in daily tasks');
+      return;
+    }
+    print('Showing SnackBar for $taskId');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle, color: Colors.white, size: 24),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Задание выполнено!',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                  Text(task.title, style: const TextStyle(color: Colors.white)),
+                  Row(
+                    children: [
+                      const Text('Награда: ', style: TextStyle(color: Colors.white)),
+                      Text('${task.rewardCoins}', style: const TextStyle(color: Colors.amber)),
+                      const SizedBox(width: 4),
+                      Image.asset(
+                        'assets/images/neocoins.png',
+                        width: 20,
+                        height: 20,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) {
+                          print('Error loading neocoins.png: $error');
+                          return const Icon(Icons.error, color: Colors.red, size: 20);
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: const Color(0xFF2E0352),
+        duration: const Duration(seconds: 5),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
   }
 
   Future<bool> _checkTask(String taskId) async {
@@ -281,17 +308,23 @@ class _AdventureMapScreenState extends State<AdventureMapScreen> with TickerProv
       MaterialPageRoute(
         builder: (context) => MazeScreen(
           onComplete: () async {
-            Navigator.pop(context);
+            final success = await _checkTask('adventure_master');
             setState(() {
               visitedPoints.add(5);
               context.read<GameCubit>().addCoins(coinsForMaze);
               _moveMarker(5);
               isGameOver = true;
+              // Показываем уведомление после рендера экрана результатов
+              if (success && mounted) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  print('Triggering notification for adventure_master after frame');
+                  _showNotification('adventure_master');
+                });
+              } else {
+                print('Failed to complete adventure_master or widget not mounted');
+              }
             });
-            final success = await _checkTask('adventure_master');
-            if (success) {
-              _showNotification('adventure_master');
-            }
+            Navigator.pop(context);
           },
           onStep: () async {
             return await _checkTask('adventure_steps');
@@ -327,96 +360,102 @@ class _AdventureMapScreenState extends State<AdventureMapScreen> with TickerProv
     final cellSize = MediaQuery.of(context).size.width / 10;
     if (isGameOver) {
       final totalCoins = visitedPoints.length * coinsPerInfoPoint + coinsForMaze;
-      return Container(
-        decoration: const BoxDecoration(gradient: kAppGradient),
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text(
-                  'Поздравляем!',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    decoration: TextDecoration.none,
+      return Scaffold(
+        body: Container(
+          decoration: const BoxDecoration(gradient: kAppGradient),
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    'Поздравляем!',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      decoration: TextDecoration.none,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 24), // Увеличено с 16 до 24
-                Text(
-                  'Вы исследовали офис Neoflex и покорили лабиринт! Заработано $totalCoins неокоинов',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    color: Colors.white,
-                    decoration: TextDecoration.none,
+                  const SizedBox(height: 24),
+                  Text(
+                    'Вы исследовали офис Neoflex и покорили лабиринт! Заработано $totalCoins неокоинов',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      color: Colors.white,
+                      decoration: TextDecoration.none,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 16), // Увеличено с 8 до 16
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      '+$totalCoins',
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.amber,
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        '+$totalCoins',
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.amber,
+                          decoration: TextDecoration.none,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Image.asset(
+                        'assets/images/neocoins.png',
+                        width: 24,
+                        height: 24,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) {
+                          print('Error loading neocoins.png: $error');
+                          return const Icon(Icons.error, color: Colors.red, size: 24);
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 32),
+                  ElevatedButton(
+                    onPressed: _restartGame,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2E0352),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 4,
+                      shadowColor: Colors.black26,
+                    ),
+                    child: const Text(
+                      'Играть снова',
+                      style: TextStyle(
+                        fontSize: 16,
                         decoration: TextDecoration.none,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Image.asset(
-                      'assets/images/neocoins.png',
-                      width: 24,
-                      height: 24,
-                      fit: BoxFit.contain,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 32),
-                ElevatedButton(
-                  onPressed: _restartGame,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2E0352),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    elevation: 4,
-                    shadowColor: Colors.black26,
                   ),
-                  child: const Text(
-                    'Играть снова',
-                    style: TextStyle(
-                      fontSize: 16,
-                      decoration: TextDecoration.none, // Убираем подчёркивание
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2E0352),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 4,
+                      shadowColor: Colors.black26,
+                    ),
+                    child: const Text(
+                      'Вернуться',
+                      style: TextStyle(
+                        fontSize: 16,
+                        decoration: TextDecoration.none,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2E0352),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    elevation: 4,
-                    shadowColor: Colors.black26,
-                  ),
-                  child: const Text(
-                    'Вернуться',
-                    style: TextStyle(
-                      fontSize: 16,
-                      decoration: TextDecoration.none, // Убираем подчёркивание
-                    ),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -567,101 +606,6 @@ class _AdventureMapScreenState extends State<AdventureMapScreen> with TickerProv
               ),
             ),
           ),
-          ..._completedTasks.map((taskId) {
-            final task = _dailyTasks.firstWhere(
-                  (t) => t.id == taskId,
-              orElse: () => DailyTask(id: '', category: '', title: '', description: '', goal: '', rewardCoins: 0),
-            );
-            if (task.id.isEmpty) {
-              print('No task found for $taskId, skipping notification');
-              return const SizedBox.shrink();
-            }
-            return Positioned(
-              top: 16,
-              left: 16,
-              right: 16,
-              child: AnimatedBuilder(
-                animation: _notificationAnimations[taskId]!,
-                builder: (context, child) {
-                  final opacity = _notificationAnimations[taskId]!.value;
-                  final offset = Offset(0, -50 * (1 - opacity));
-                  return Opacity(
-                    opacity: opacity,
-                    child: Transform.translate(
-                      offset: offset,
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF2E0352),
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Colors.black26,
-                              blurRadius: 8,
-                              offset: Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.check_circle, color: Colors.white, size: 32),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Задание выполнено!',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  Text(
-                                    task.title,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                  Row(
-                                    children: [
-                                      const Text(
-                                        'Награда: ',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                      Text(
-                                        '${task.rewardCoins}',
-                                        style: const TextStyle(
-                                          color: Colors.amber,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Image.asset(
-                                        'assets/images/neocoins.png',
-                                        width: 20,
-                                        height: 20,
-                                        fit: BoxFit.contain,
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            );
-          }).toList(),
         ],
       ),
     );

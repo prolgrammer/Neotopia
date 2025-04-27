@@ -50,19 +50,19 @@ class _MascotAnimationState extends State<MascotAnimation> with SingleTickerProv
 
 final List<DailyTask> coderTasks = [
   DailyTask(
-    id: 'coder_correct',
+    id: 'coder_rotation',
     category: 'Coder',
-    title: 'Код с первого раза',
-    description: 'Введи правильный код для анимации маскота с первой попытки!',
-    goal: 'Ввести правильный код без ошибок при первой проверке.',
+    title: 'Первый код',
+    description: 'Напиши код, чтобы маскот начал двигаться! Настрой вращение.',
+    goal: 'Правильно задать end для _rotation (например, 2 * 3.14159).',
     rewardCoins: 5,
   ),
   DailyTask(
-    id: 'coder_complete',
+    id: 'coder_perfect',
     category: 'Coder',
-    title: 'Оживший маскот',
-    description: 'Заверши задачу и оживи маскота с правильной анимацией!',
-    goal: 'Успешно анимировать маскота (360° вращение, увеличение в 1.5 раза).',
+    title: 'Безупречный код',
+    description: 'Напиши код без ошибок с первой попытки!',
+    goal: 'Завершить задание “Нео-Кодер” с первой проверки без ошибок.',
     rewardCoins: 5,
   ),
 ];
