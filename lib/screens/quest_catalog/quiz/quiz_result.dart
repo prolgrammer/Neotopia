@@ -41,13 +41,13 @@ class QuizResult extends StatelessWidget {
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: Color(0xFF4A1A7A), width: 1), // Обводка
+          side: const BorderSide(color: Color(0xFF4A1A7A), width: 1),
         ),
         elevation: 8,
         title: Container(
           padding: const EdgeInsets.all(16),
           decoration: const BoxDecoration(
-            gradient: kAppGradient, // Градиент Neoflex
+            gradient: kAppGradient,
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
           child: const Text(
@@ -60,7 +60,7 @@ class QuizResult extends StatelessWidget {
         ),
         content: SizedBox(
           width: double.maxFinite,
-          height: 300, // Фиксированная высота для прокрутки
+          height: 300,
           child: ListView.builder(
             itemCount: questions.length,
             itemBuilder: (context, index) {
@@ -68,7 +68,7 @@ class QuizResult extends StatelessWidget {
               final userAnswer = userAnswers[index];
               final correctAnswer = question['correct_answer'] as String;
               if (userAnswer == null || userAnswer == correctAnswer) {
-                return const SizedBox.shrink(); // Пропускаем правильные ответы
+                return const SizedBox.shrink();
               }
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
@@ -129,7 +129,7 @@ class QuizResult extends StatelessWidget {
     final int earnedCoins = correctAnswers * coinsPerCorrectAnswer;
 
     return Container(
-      decoration: const BoxDecoration(gradient: kAppGradient), // Градиент Neoflex
+      decoration: const BoxDecoration(gradient: kAppGradient),
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: SafeArea(

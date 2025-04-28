@@ -23,13 +23,11 @@ class QuestCatalogScreen extends StatelessWidget {
             SafeArea(
               child: Column(
                 children: [
-                  // Верхняя плашка
                   Container(
                     padding: EdgeInsets.all(16),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // Аватар и ник
                         Row(
                           children: [
                             GestureDetector(
@@ -66,12 +64,10 @@ class QuestCatalogScreen extends StatelessWidget {
                             ),
                           ],
                         ),
-                        // Логотип Neotopia
                         Image.asset(
                           'assets/images/neotopia.png',
                           height: 40,
                         ),
-                        // Монеты
                         Row(
                           children: [
                             Image.asset(
@@ -92,13 +88,11 @@ class QuestCatalogScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  // Белая полоска
                   Divider(
                     color: Colors.white,
                     thickness: 2,
                     height: 1,
                   ),
-                  // Заголовок "Каталог игр"
                   Padding(
                     padding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                     child: Text(
@@ -182,9 +176,8 @@ class QuestCatalogScreen extends StatelessWidget {
                 ],
               ),
             ),
-            // Кружок с иконкой дома
             Positioned(
-              bottom: 52, // Измените bottom здесь, чтобы настроить отступ от низа
+              bottom: 52,
               left: 0,
               right: 0,
               child: Center(
@@ -193,12 +186,12 @@ class QuestCatalogScreen extends StatelessWidget {
                     Navigator.pushReplacementNamed(context, '/main');
                   },
                   child: Container(
-                    width: 60, // Измените width и height здесь, чтобы настроить размер кружка
+                    width: 60,
                     height: 60,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white, // Белый фон кружка
-                      border: Border.all(color: Color(0xFF4A1A7A), width: 1), // Фиолетовая обводка
+                      color: Colors.white,
+                      border: Border.all(color: Color(0xFF4A1A7A), width: 1),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black26,
@@ -210,16 +203,16 @@ class QuestCatalogScreen extends StatelessWidget {
                     child: Center(
                       child: Image.asset(
                         'assets/images/home.png',
-                        height: 32, // Измените height и width здесь, чтобы настроить размер иконки
+                        height: 32,
                         width: 32,
                         fit: BoxFit.contain,
                         errorBuilder: (context, error, stackTrace) {
-                          print('Error loading home.png: $error'); // Логирование ошибки
+                          print('Error loading home.png: $error');
                           return Icon(
                             Icons.home,
                             color: Color(0xFF2E0352),
                             size: 24,
-                          ); // Запасная иконка
+                          );
                         },
                       ),
                     ),

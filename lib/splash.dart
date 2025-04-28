@@ -20,7 +20,6 @@ class _SplashScreenState extends State<SplashScreen> {
         });
         _controller.setLooping(false);
         _controller.play();
-        // Переход на экран логина через 5 секунд или по окончании видео
         Future.delayed(const Duration(seconds: 5), () {
           if (mounted) {
             Navigator.pushReplacementNamed(context, '/login');
@@ -35,7 +34,6 @@ class _SplashScreenState extends State<SplashScreen> {
         });
       }).catchError((error) {
         print('Error initializing video: $error');
-        // В случае ошибки видео переходим на логин через 2 секунды
         Future.delayed(const Duration(seconds: 2), () {
           if (mounted) {
             Navigator.pushReplacementNamed(context, '/login');
@@ -54,7 +52,7 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        color: Colors.black, // Фон на случай, если видео не загрузится
+        color: Colors.black,
         child: Center(
           child: _isInitialized
               ? AspectRatio(

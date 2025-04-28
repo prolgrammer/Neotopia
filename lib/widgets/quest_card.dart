@@ -21,18 +21,18 @@ class QuestCard extends StatelessWidget {
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            backgroundColor: Colors.white, // Белый фон
-            surfaceTintColor: Colors.transparent, // Убираем налёт цвета
+            backgroundColor: Colors.white,
+            surfaceTintColor: Colors.transparent,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
-              side: BorderSide(color: Color(0xFF4A1A7A), width: 1), // Фиолетовая обводка
+              side: BorderSide(color: Color(0xFF4A1A7A), width: 1),
             ),
-            elevation: 8, // Лёгкая тень
+            elevation: 8,
             title: Container(
               padding: EdgeInsets.all(16),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Color(0xFFDE683C), Color(0xFF2E0352)], // Градиент Neoflex
+                  colors: [Color(0xFFDE683C), Color(0xFF2E0352)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -42,7 +42,7 @@ class QuestCard extends StatelessWidget {
                 title,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: Colors.white, // Белый текст для контраста с градиентом
+                  color: Colors.white,
                 ),
               ),
             ),
@@ -59,15 +59,15 @@ class QuestCard extends StatelessWidget {
                 SizedBox(height: 16),
                 TextButton(
                   onPressed: () {
-                    Navigator.pop(context); // Закрываем диалог
+                    Navigator.pop(context);
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (context) => NeopediaScreen()),
                     );
                   },
                   style: TextButton.styleFrom(
-                    side: BorderSide(color: Color(0xFF4A1A7A), width: 1), // Фиолетовая обводка
-                    backgroundColor: Colors.white, // Белый фон
+                    side: BorderSide(color: Color(0xFF4A1A7A), width: 1),
+                    backgroundColor: Colors.white,
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   ),
                   child: Text(
@@ -84,8 +84,8 @@ class QuestCard extends StatelessWidget {
                   TextButton(
                     onPressed: () => Navigator.pop(context),
                     style: TextButton.styleFrom(
-                      side: BorderSide(color: Color(0xFF4A1A7A), width: 1), // Фиолетовая обводка
-                      backgroundColor: Colors.white, // Белый фон
+                      side: BorderSide(color: Color(0xFF4A1A7A), width: 1),
+                      backgroundColor: Colors.white,
                       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     ),
                     child: Text(
@@ -99,9 +99,9 @@ class QuestCard extends StatelessWidget {
                       onTap();
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF2E0352), // Фон Neoflex
-                      foregroundColor: Colors.white, // Белый текст
-                      side: BorderSide(color: Color(0xFF4A1A7A), width: 1), // Фиолетовая обводка
+                      backgroundColor: Color(0xFF2E0352),
+                      foregroundColor: Colors.white,
+                      side: BorderSide(color: Color(0xFF4A1A7A), width: 1),
                       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -120,7 +120,7 @@ class QuestCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Color(0xFF4A1A7A), width: 1), // Тонкая фиолетовая обводка
+          border: Border.all(color: Color(0xFF4A1A7A), width: 1),
           boxShadow: [
             BoxShadow(
               color: Colors.black26,
@@ -134,7 +134,7 @@ class QuestCard extends StatelessWidget {
             Container(
               width: 80,
               decoration: BoxDecoration(
-                color: Colors.white, // Белый фон боковой полосы
+                color: Colors.white,
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(20),
                   bottomLeft: Radius.circular(20),
@@ -142,10 +142,10 @@ class QuestCard extends StatelessWidget {
               ),
               child: Center(
                 child: Transform.translate(
-                  offset: Offset(2, 0), // Измените значение Offset(x, y) для смещения иконки (x - вправо, y - вниз)
+                  offset: Offset(2, 0),
                   child: Image.asset(
                     imagePath,
-                    height: 60, // Измените height и width здесь, чтобы настроить размер иконки
+                    height: 60,
                     width: 60,
                     fit: BoxFit.contain,
                   ),

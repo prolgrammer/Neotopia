@@ -186,30 +186,55 @@ class _PuzzleScreenState extends State<PuzzleScreen> with TickerProviderStateMix
 
     await context.read<AuthCubit>().completeDailyTask(uid, taskId, dateKey, task.rewardCoins);
 
-    setState(() {
-      _completedTasks.add(taskId);
-      _notificationControllers[taskId] = AnimationController(
-        duration: const Duration(milliseconds: 500),
-        vsync: this,
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle, color: Colors.white, size: 24),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Задание выполнено!',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      task.title,
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                    Row(
+                      children: [
+                        const Text('Награда: ', style: TextStyle(color: Colors.white)),
+                        Text('${task.rewardCoins}', style: const TextStyle(color: Colors.amber)),
+                        const SizedBox(width: 4),
+                        Image.asset(
+                          'assets/images/neocoins.png',
+                          width: 20,
+                          height: 20,
+                          errorBuilder: (_, __, ___) => const Icon(Icons.monetization_on, color: Colors.amber, size: 20),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: const Color(0xFF2E0352),
+          duration: const Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          margin: const EdgeInsets.all(16),
+        ),
       );
-      _notificationAnimations[taskId] = Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(parent: _notificationControllers[taskId]!, curve: Curves.easeInOut),
-      );
-      _notificationControllers[taskId]!.forward().then((_) {
-        Future.delayed(const Duration(seconds: 3), () {
-          if (mounted) {
-            _notificationControllers[taskId]!.reverse().then((_) {
-              setState(() {
-                _completedTasks.remove(taskId);
-                _notificationControllers[taskId]!.dispose();
-                _notificationControllers.remove(taskId);
-                _notificationAnimations.remove(taskId);
-              });
-            });
-          }
-        });
-      });
-    });
+    }
   }
 
   void _restartGame() {

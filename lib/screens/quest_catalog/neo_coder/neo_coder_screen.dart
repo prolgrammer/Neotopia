@@ -272,7 +272,6 @@ class _NeoCoderScreenState extends State<NeoCoderScreen> with TickerProviderStat
         errorMessage = 'Ошибка в коде:\n- ${errors.join('\n- ')}';
       });
 
-      // Показываем SnackBar через текущий контекст
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           ScaffoldMessenger.of(context)
@@ -375,7 +374,6 @@ class _NeoCoderScreenState extends State<NeoCoderScreen> with TickerProviderStat
             if (mounted) _errorController.reset();
           });
 
-          // Показываем SnackBar через текущий контекст
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) {
               ScaffoldMessenger.of(context)
@@ -413,7 +411,7 @@ class _NeoCoderScreenState extends State<NeoCoderScreen> with TickerProviderStat
         coinsEarned: coinsForCompletion,
         onRestart: _restartGame,
         onBack: () {
-          Navigator.pop(context); // Просто закрываем экран без дополнительных действий
+          Navigator.pop(context);
         },
       );
     }

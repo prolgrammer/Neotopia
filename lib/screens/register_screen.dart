@@ -11,7 +11,6 @@ class RegisterScreen extends StatelessWidget {
   final TextEditingController _confirmPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
-  // Функция валидации email
   String? _validateEmail(String? value) {
     if (value == null || value.isEmpty) {
       return 'Пожалуйста, введите email';
@@ -22,7 +21,6 @@ class RegisterScreen extends StatelessWidget {
     return null;
   }
 
-  // Функция валидации имени пользователя
   String? _validateUsername(String? value) {
     if (value == null || value.isEmpty) {
       return 'Пожалуйста, введите имя пользователя';
@@ -33,7 +31,6 @@ class RegisterScreen extends StatelessWidget {
     return null;
   }
 
-  // Функция валидации пароля
   String? _validatePassword(String? value) {
     if (value == null || value.isEmpty) {
       return 'Пожалуйста, введите пароль';
@@ -44,7 +41,6 @@ class RegisterScreen extends StatelessWidget {
     return null;
   }
 
-  // Функция валидации подтверждения пароля
   String? _validateConfirmPassword(String? confirmPassword, String? password) {
     if (confirmPassword == null || confirmPassword.isEmpty) {
       return 'Пожалуйста, подтвердите пароль';
@@ -109,7 +105,6 @@ class RegisterScreen extends StatelessWidget {
                             listenWhen: (previous, current) =>
                             previous.status != current.status,
                             listener: (context, state) {
-                              // Очищаем предыдущий SnackBar перед показом нового
                               ScaffoldMessenger.of(context).clearSnackBars();
                               if (state.status == AuthStatus.error) {
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -128,7 +123,6 @@ class RegisterScreen extends StatelessWidget {
                                 onPressed: state.status == AuthStatus.loading
                                     ? null
                                     : () {
-                                  // Валидация вручную
                                   String? emailError = _validateEmail(_emailController.text);
                                   String? usernameError = _validateUsername(_usernameController.text);
                                   String? passwordError = _validatePassword(_passwordController.text);
@@ -162,7 +156,6 @@ class RegisterScreen extends StatelessWidget {
                                     return;
                                   }
 
-                                  // Если валидация прошла, вызываем register
                                   context.read<AuthCubit>().register(
                                     _emailController.text.trim(),
                                     _usernameController.text.trim(),
@@ -179,7 +172,10 @@ class RegisterScreen extends StatelessWidget {
                                         Colors.white),
                                   ),
                                 )
-                                    : Text('Зарегистрироваться'),
+                                    : Text(
+                                  'Зарегистрироваться',
+                                  style: TextStyle(color: Color(0xFF140032)),
+                                ),
                               );
                             },
                           ),
@@ -187,7 +183,10 @@ class RegisterScreen extends StatelessWidget {
                             onPressed: () {
                               Navigator.pushNamed(context, '/login');
                             },
-                            child: Text('Уже есть аккаунт? Войти'),
+                            child: Text(
+                              'Уже есть аккаунт? Войти',
+                              style: TextStyle(color: Color(0xFF140032)),
+                            ),
                           ),
                         ],
                       ),

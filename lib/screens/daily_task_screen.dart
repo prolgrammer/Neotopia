@@ -86,45 +86,6 @@ class _DailyTasksScreenState extends State<DailyTasksScreen> {
     }
   }
 
-  Future<void> _refreshDailyTasks() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    final authCubit = context.read<AuthCubit>();
-    if (authCubit.state.user == null) {
-      setState(() {
-        _isLoading = false;
-        _errorMessage = 'Пожалуйста, войдите в аккаунт';
-      });
-      return;
-    }
-
-    final uid = authCubit.state.user!.uid;
-    try {
-      final now = DateTime.now().toUtc().add(Duration(hours: 3));
-      final dateKey = DateFormat('yyyy-MM-dd').format(now);
-      _dailyTasks = _generateDailyTasks();
-      final tasksMap = {
-        'task1': _dailyTasks[0].toMap(),
-        'task2': _dailyTasks[1].toMap(),
-      };
-      await _database.child('daily_tasks').child(dateKey).set(tasksMap);
-      await _updateTaskCompletionStatus(uid, dateKey);
-      print('Daily tasks refreshed: ${_dailyTasks.map((t) => t.id).toList()}');
-    } catch (e) {
-      print('Error refreshing daily tasks: $e');
-      setState(() {
-        _errorMessage = 'Ошибка обновления заданий: $e';
-      });
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
   Future<void> _updateTaskCompletionStatus(String uid, String dateKey) async {
     try {
       final progressSnapshot = await _database
@@ -251,7 +212,7 @@ class _DailyTasksScreenState extends State<DailyTasksScreen> {
         return;
     }
 
-    if (mounted && context.read<AuthCubit>(). state.user != null) {
+    if (mounted && context.read<AuthCubit>().state.user != null) {
       final now = DateTime.now().toUtc().add(Duration(hours: 3));
       final dateKey = DateFormat('yyyy-MM-dd').format(now);
       await _updateTaskCompletionStatus(context.read<AuthCubit>().state.user!.uid, dateKey);
@@ -273,6 +234,7 @@ class _DailyTasksScreenState extends State<DailyTasksScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
+                        // Аватар и ник
                         Row(
                           children: [
                             BlocBuilder<AuthCubit, AuthState>(
@@ -335,31 +297,13 @@ class _DailyTasksScreenState extends State<DailyTasksScreen> {
                   ),
                   Padding(
                     padding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Flexible( // Wrap Text in Flexible to prevent overflow
-                          child: Text(
-                            'Ежедневные задания',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            overflow: TextOverflow.ellipsis, // Handle long text gracefully
-                          ),
-                        ),
-                        ElevatedButton(
-                          onPressed: _refreshDailyTasks,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: Color(0xFF4A1A7A),
-                            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4), // Reduce padding
-                            textStyle: TextStyle(fontSize: 14), // Smaller font for button
-                          ),
-                          child: Text('Обновить'),
-                        ),
-                      ],
+                    child: Text(
+                      'Ежедневные задания',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   Expanded(
@@ -434,14 +378,6 @@ class _DailyTasksScreenState extends State<DailyTasksScreen> {
                                           size: 28,
                                         ),
                                     ],
-                                  ),
-                                  SizedBox(height: 8),
-                                  Text(
-                                    'Категория: ${task.category}',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Color(0xFF4A1A7A).withOpacity(0.7),
-                                    ),
                                   ),
                                   SizedBox(height: 12),
                                   Text(

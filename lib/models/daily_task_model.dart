@@ -126,7 +126,7 @@ final List<DailyTask> availableTasks = [
   DailyTask(
     id: 'coder_rotation',
     category: 'Coder',
-    title: 'Первый код',
+    title: 'Вращающийся код',
     description: 'Напиши код, чтобы маскот начал двигаться! Настрой вращение.',
     goal: 'Правильно задать end для _rotation (например, 2 * 3.14159).',
     rewardCoins: 5,

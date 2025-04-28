@@ -34,7 +34,6 @@ class QuestCubit extends Cubit<QuestState> {
     int nextIndex = state.currentQuestionIndex + 1;
     bool isCompleted = nextIndex >= 5;
 
-    // Сохраняем ответ в базе
     onSave(state.currentQuestionIndex, answer);
 
     emit(state.copyWith(

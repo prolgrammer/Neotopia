@@ -9,7 +9,6 @@ class LoginScreen extends StatelessWidget {
   final TextEditingController _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
-  // Функция валидации email
   String? _validateEmail(String? value) {
     if (value == null || value.isEmpty) {
       return 'Пожалуйста, введите email';
@@ -20,7 +19,6 @@ class LoginScreen extends StatelessWidget {
     return null;
   }
 
-  // Функция валидации пароля
   String? _validatePassword(String? value) {
     if (value == null || value.isEmpty) {
       return 'Пожалуйста, введите пароль';
@@ -62,14 +60,12 @@ class LoginScreen extends StatelessWidget {
                             controller: _emailController,
                             decoration: InputDecoration(labelText: 'Email'),
                             keyboardType: TextInputType.emailAddress,
-                            // Убираем validator, чтобы не показывать ошибки под полем
                           ),
                           SizedBox(height: 16),
                           TextFormField(
                             controller: _passwordController,
                             decoration: InputDecoration(labelText: 'Пароль'),
                             obscureText: true,
-                            // Убираем validator, чтобы не показывать ошибки под полем
                           ),
                           SizedBox(height: 16),
                           BlocConsumer<AuthCubit, AuthState>(
@@ -93,7 +89,6 @@ class LoginScreen extends StatelessWidget {
                                 onPressed: state.status == AuthStatus.loading
                                     ? null
                                     : () {
-                                  // Валидация вручную
                                   String? emailError = _validateEmail(_emailController.text);
                                   String? passwordError = _validatePassword(_passwordController.text);
 
@@ -110,7 +105,6 @@ class LoginScreen extends StatelessWidget {
                                     return;
                                   }
 
-                                  // Если валидация прошла, вызываем login
                                   context.read<AuthCubit>().login(
                                     _emailController.text.trim(),
                                     _passwordController.text,
@@ -126,7 +120,10 @@ class LoginScreen extends StatelessWidget {
                                         Colors.white),
                                   ),
                                 )
-                                    : Text('Войти'),
+                                    : Text(
+                                  'Войти',
+                                  style: TextStyle(color: Color(0xFF140032)),
+                                ),
                               );
                             },
                           ),
@@ -134,7 +131,10 @@ class LoginScreen extends StatelessWidget {
                             onPressed: () {
                               Navigator.pushNamed(context, '/register');
                             },
-                            child: Text('Нет аккаунта? Зарегистрироваться'),
+                            child: Text(
+                              'Нет аккаунта? Зарегистрироваться',
+                              style: TextStyle(color: Color(0xFF140032)),
+                            ),
                           ),
                         ],
                       ),

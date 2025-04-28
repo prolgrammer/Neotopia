@@ -50,32 +50,9 @@ class _MazeScreenState extends State<MazeScreen> {
         widget.onStep().then((success) {
           if (success && mounted) {
             print('Showing SnackBar for adventure_steps');
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Row(
-                  children: [
-                    const Expanded(
-                      child: Text(
-                        'Задание выполнено! Пять шагов к успеху\nНаграда: 5',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    Image.asset(
-                      'assets/images/neocoins.png',
-                      width: 20,
-                      height: 20,
-                      fit: BoxFit.contain,
-                    ),
-                  ],
-                ),
-                backgroundColor: const Color(0xFF2E0352),
-                duration: const Duration(seconds: 3),
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                margin: const EdgeInsets.all(16),
-              ),
+            _showTaskNotification(
+              title: 'Пять шагов к успеху',
+              reward: 5,
             );
           }
         });
@@ -86,6 +63,76 @@ class _MazeScreenState extends State<MazeScreen> {
         widget.onComplete();
       }
     });
+  }
+
+  void _showTaskNotification({required String title, required int reward}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle, color: Colors.white, size: 24),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Задание выполнено!',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    title,
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                  Row(
+                    children: [
+                      const Text(
+                        'Награда: ',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      Text(
+                        '$reward',
+                        style: const TextStyle(
+                          color: Colors.amber,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Image.asset(
+                        'assets/images/neocoins.png',
+                        width: 20,
+                        height: 20,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => const Icon(
+                          Icons.monetization_on,
+                          color: Colors.amber,
+                          size: 20,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: const Color(0xFF2E0352),
+        duration: const Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        margin: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
+        ),
+      ),
+    );
   }
 
   @override

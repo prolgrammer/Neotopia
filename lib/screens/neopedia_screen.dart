@@ -20,18 +20,15 @@ class NeopediaScreen extends StatelessWidget {
         child: SafeArea(
           child: Column(
             children: [
-              // Прокручиваемый контент
               Expanded(
                 child: SingleChildScrollView(
                   child: Column(
                     children: [
-                      // Верхняя панель
                       Container(
                         padding: EdgeInsets.all(16),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            // Аватар и ник
                             Row(
                               children: [
                                 GestureDetector(
@@ -68,12 +65,10 @@ class NeopediaScreen extends StatelessWidget {
                                 ),
                               ],
                             ),
-                            // Логотип Neotopia
                             Image.asset(
                               'assets/images/neotopia.png',
                               height: 40,
                             ),
-                            // Монеты
                             Row(
                               children: [
                                 Image.asset(
@@ -94,13 +89,11 @@ class NeopediaScreen extends StatelessWidget {
                           ],
                         ),
                       ),
-                      // Белая полоска
                       Divider(
                         color: Colors.white,
                         thickness: 2,
                         height: 1,
                       ),
-                      // Заголовок "Неопедия"
                       Padding(
                         padding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                         child: Text(
@@ -112,7 +105,6 @@ class NeopediaScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-                      // Список карточек
                       Padding(
                         padding: EdgeInsets.all(16),
                         child: Column(
@@ -189,7 +181,6 @@ class NeopediaScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              // Фиксированная кнопка "домик"
               Padding(
                 padding: EdgeInsets.symmetric(vertical: 16),
                 child: GestureDetector(

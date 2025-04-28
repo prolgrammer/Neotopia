@@ -53,7 +53,6 @@ class _QuestScreenState extends State<QuestScreen> {
   @override
   void initState() {
     super.initState();
-    // Загружаем начальный индекс из базы
     _loadInitialQuestionIndex();
   }
 

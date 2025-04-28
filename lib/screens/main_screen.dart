@@ -17,13 +17,11 @@ class MainScreen extends StatelessWidget {
         child: SafeArea(
           child: Column(
             children: [
-              // Верхняя часть с аватаром, ником, логотипом и монетами
               Container(
                 padding: EdgeInsets.all(16),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Аватар и ник
                     Row(
                       children: [
                         GestureDetector(
@@ -86,13 +84,11 @@ class MainScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              // Белая полоска
               Divider(
                 color: Colors.white,
                 thickness: 2,
                 height: 1,
               ),
-              // Карточки
               Expanded(
                 child: Padding(
                   padding: EdgeInsets.all(16),
@@ -186,10 +182,10 @@ class MainCard extends StatelessWidget {
                 color: Colors.white,
                 child: Center(
                   child: Transform.translate(
-                    offset: Offset(2, 0), // Измените значение Offset(x, y) для смещения иконки (x - вправо, y - вниз)
+                    offset: Offset(2, 0),
                     child: Image.asset(
                       imagePath,
-                      height: 60, // Измените height и width здесь, чтобы настроить размер иконки
+                      height: 60,
                       width: 60,
                       fit: BoxFit.contain,
                     ),

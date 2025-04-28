@@ -10,7 +10,6 @@ class ValuesCultureSection extends StatelessWidget {
         child: SafeArea(
           child: Column(
             children: [
-              // Верхняя панель
               Container(
                 padding: EdgeInsets.all(16),
                 child: Row(

@@ -33,7 +33,7 @@ class NeopediaCard extends StatelessWidget {
             children: [
               Container(
                 width: 80,
-                color: Color(0xFFE6D7FF), // Светло-фиолетовый фон, как в kAppGradient
+                color: Color(0xFFE6D7FF),
                 child: Center(
                   child: Image.asset(
                     imagePath,
@@ -55,7 +55,7 @@ class NeopediaCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF2E0352), // Темно-фиолетовый текст
+                      color: Color(0xFF2E0352),
                     ),
                   ),
                 ),

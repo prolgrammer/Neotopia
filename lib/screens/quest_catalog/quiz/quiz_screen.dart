@@ -1,3 +1,4 @@
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart' as intl;
@@ -28,6 +29,8 @@ class _QuizScreenState extends State<QuizScreen> with SingleTickerProviderStateM
   bool showResult = false;
   static const int coinsPerCorrectAnswer = 10;
   List<DailyTask> _dailyTasks = [];
+  final Map<String, bool> _taskCompletionStatus = {};
+  final DatabaseReference _database = FirebaseDatabase.instance.ref();
 
   @override
   void initState() {
@@ -46,10 +49,28 @@ class _QuizScreenState extends State<QuizScreen> with SingleTickerProviderStateM
   }
 
   Future<void> _loadDailyTasks() async {
-    setState(() {
-      _dailyTasks = quizTasks.where((task) => task.category == 'Quiz').toList();
-      print('Loaded quiz tasks: ${_dailyTasks.map((t) => t.id).toList()}');
-    });
+    final now = DateTime.now().toUtc().add(const Duration(hours: 3));
+    final dateKey = intl.DateFormat('yyyy-MM-dd').format(now);
+    try {
+      final snapshot = await _database.child('daily_tasks').child(dateKey).get();
+      if (snapshot.exists && snapshot.value != null) {
+        final data = snapshot.value as Map<dynamic, dynamic>;
+        setState(() {
+          _dailyTasks = data.values
+              .map((task) => DailyTask.fromMap(Map<String, dynamic>.from(task)))
+              .where((task) => task.category == 'Quiz')
+              .toList();
+          print('Loaded daily quiz tasks: ${_dailyTasks.map((t) => t.id).toList()}');
+        });
+      } else {
+        setState(() {
+          _dailyTasks = [];
+          print('No daily tasks found for $dateKey');
+        });
+      }
+    } catch (e) {
+      print('Error loading daily tasks: $e');
+    }
   }
 
   void _selectRandomQuestions() {
@@ -136,7 +157,7 @@ class _QuizScreenState extends State<QuizScreen> with SingleTickerProviderStateM
     final isCorrect = currentQuestion['correct_answer'] == selectedOption;
 
     setState(() {
-      userAnswers[currentQuestionIndex] = selectedOption; // Сохраняем ответ пользователя
+      userAnswers[currentQuestionIndex] = selectedOption;
       if (isCorrect) {
         correctAnswers++;
         consecutiveCorrectAnswers++;
@@ -148,17 +169,23 @@ class _QuizScreenState extends State<QuizScreen> with SingleTickerProviderStateM
       }
     });
 
-    // Проверка заданий
-    if (consecutiveCorrectAnswers >= 5) {
+    if (consecutiveCorrectAnswers >= 5 &&
+        _dailyTasks.any((t) => t.id == 'quiz_expert') &&
+        !_taskCompletionStatus.containsKey('quiz_expert')) {
       final success = await _checkTask('quiz_expert');
       if (success) {
         _showTaskNotification('quiz_expert');
+        _taskCompletionStatus['quiz_expert'] = true;
       }
     }
-    if (cultureCorrectAnswers >= 1) {
+
+    if (cultureCorrectAnswers >= 1 &&
+        _dailyTasks.any((t) => t.id == 'quiz_culture') &&
+        !_taskCompletionStatus.containsKey('quiz_culture')) {
       final success = await _checkTask('quiz_culture');
       if (success) {
         _showTaskNotification('quiz_culture');
+        _taskCompletionStatus['quiz_culture'] = true;
       }
     }
 
@@ -168,7 +195,6 @@ class _QuizScreenState extends State<QuizScreen> with SingleTickerProviderStateM
         currentQuestionIndex++;
         _controller.forward();
       } else {
-        // Начисляем монеты в конце игры
         context.read<GameCubit>().addCoins(correctAnswers * coinsPerCorrectAnswer);
         showResult = true;
       }

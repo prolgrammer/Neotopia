@@ -47,7 +47,6 @@ class OfficeMapPainter extends CustomPainter {
     for (int row = 0; row < 10; row++) {
       for (int col = 0; col < 10; col++) {
         if (officeMap[row][col] == 1) {
-          // Тени стен (оставляем только для внутренних стен)
           if (col < 9 && officeMap[row][col + 1] != 1) {
             canvas.drawLine(
               Offset((col + 1) * cellSize + 2, row * cellSize),
@@ -63,7 +62,6 @@ class OfficeMapPainter extends CustomPainter {
             );
           }
 
-          // Основные стенки (убираем граничные)
           if (col < 9 && officeMap[row][col + 1] != 1) {
             canvas.drawLine(
               Offset((col + 1) * cellSize, row * cellSize),
@@ -78,16 +76,14 @@ class OfficeMapPainter extends CustomPainter {
               wallPaint,
             );
           }
-          // Убираем автоматическое рисование левой стенки (col == 0)
-          if (col > 0 && officeMap[row][col - 1] != 1) {  // ← Только если не левый край
+          if (col > 0 && officeMap[row][col - 1] != 1) {
             canvas.drawLine(
               Offset(col * cellSize, row * cellSize),
               Offset(col * cellSize, (row + 1) * cellSize),
               wallPaint,
             );
           }
-          // Убираем автоматическое рисование верхней стенки (row == 0)
-          if (row > 0 && officeMap[row - 1][col] != 1) {  // ← Только если не верхний край
+          if (row > 0 && officeMap[row - 1][col] != 1) {
             canvas.drawLine(
               Offset(col * cellSize, row * cellSize),
               Offset((col + 1) * cellSize, row * cellSize),

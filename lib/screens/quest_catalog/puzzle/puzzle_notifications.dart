@@ -22,15 +22,16 @@ class PuzzleNotifications extends StatelessWidget {
           orElse: () => DailyTask(id: '', category: '', title: '', description: '', goal: '', rewardCoins: 0),
         );
         if (task.id.isEmpty) return const SizedBox.shrink();
+
         return Positioned(
-          top: 16,
+          bottom: 16,
           left: 16,
           right: 16,
           child: AnimatedBuilder(
             animation: notificationAnimations[taskId]!,
             builder: (context, child) {
               final opacity = notificationAnimations[taskId]!.value;
-              final offset = Offset(0, -50 * (1 - opacity));
+              final offset = Offset(0, 50 * (1 - opacity)); // Изменено направление анимации
               return Opacity(
                 opacity: opacity,
                 child: Transform.translate(
@@ -71,12 +72,35 @@ class PuzzleNotifications extends StatelessWidget {
                                   fontSize: 14,
                                 ),
                               ),
-                              Text(
-                                'Награда: ${task.rewardCoins} 🪙',
-                                style: const TextStyle(
-                                  color: Colors.amber,
-                                  fontSize: 14,
-                                ),
+                              Row(
+                                children: [
+                                  const Text(
+                                    'Награда: ',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${task.rewardCoins}',
+                                    style: const TextStyle(
+                                      color: Colors.amber,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Image.asset(
+                                    'assets/images/neocoins.png',
+                                    width: 20,
+                                    height: 20,
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (_, __, ___) => const Icon(
+                                      Icons.monetization_on,
+                                      color: Colors.amber,
+                                      size: 20,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
