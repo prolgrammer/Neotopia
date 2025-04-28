@@ -10,12 +10,12 @@ class OfficeMapPainter extends CustomPainter {
     final cellSize = size.width / 10;
     final floorPaint = Paint()
       ..shader = LinearGradient(
-        colors: [const Color(0xFFDE683C), const Color(0xFF2E0352)],
+        colors: [const Color(0xFF821464), const Color(0xFFD2005A)],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
     final wallPaint = Paint()
-      ..color = const Color(0xFF4A1A7A)
+      ..color = const Color(0xFF5E0B4B)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
     final shadowPaint = Paint()
@@ -47,6 +47,7 @@ class OfficeMapPainter extends CustomPainter {
     for (int row = 0; row < 10; row++) {
       for (int col = 0; col < 10; col++) {
         if (officeMap[row][col] == 1) {
+          // Тени стен (оставляем только для внутренних стен)
           if (col < 9 && officeMap[row][col + 1] != 1) {
             canvas.drawLine(
               Offset((col + 1) * cellSize + 2, row * cellSize),
@@ -61,6 +62,8 @@ class OfficeMapPainter extends CustomPainter {
               shadowPaint,
             );
           }
+
+          // Основные стенки (убираем граничные)
           if (col < 9 && officeMap[row][col + 1] != 1) {
             canvas.drawLine(
               Offset((col + 1) * cellSize, row * cellSize),
@@ -75,14 +78,16 @@ class OfficeMapPainter extends CustomPainter {
               wallPaint,
             );
           }
-          if (col == 0 || officeMap[row][col - 1] != 1) {
+          // Убираем автоматическое рисование левой стенки (col == 0)
+          if (col > 0 && officeMap[row][col - 1] != 1) {  // ← Только если не левый край
             canvas.drawLine(
               Offset(col * cellSize, row * cellSize),
               Offset(col * cellSize, (row + 1) * cellSize),
               wallPaint,
             );
           }
-          if (row == 0 || officeMap[row - 1][col] != 1) {
+          // Убираем автоматическое рисование верхней стенки (row == 0)
+          if (row > 0 && officeMap[row - 1][col] != 1) {  // ← Только если не верхний край
             canvas.drawLine(
               Offset(col * cellSize, row * cellSize),
               Offset((col + 1) * cellSize, row * cellSize),
@@ -104,7 +109,6 @@ class OfficeMapPainter extends CustomPainter {
               ..strokeWidth = 3,
           );
           textPaint.text = const TextSpan(
-            text: 'Вход',
             style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
           );
           textPaint.layout();

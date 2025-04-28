@@ -302,10 +302,7 @@ class _PairMatchScreenState extends State<PairMatchScreen> with TickerProviderSt
         decoration: const BoxDecoration(gradient: kAppGradient),
         child: isGameOver
             ? PairMatchResult(
-          coinsEarned: coinsForCompletion +
-              _taskCompletionStatus.entries
-                  .where((entry) => entry.value)
-                  .fold(0, (sum, entry) => sum + (_dailyTasks.firstWhere((t) => t.id == entry.key).rewardCoins)),
+          coinsEarned: coinsForCompletion,
           onRestart: _restartGame,
           onBack: () => Navigator.pop(context),
         )

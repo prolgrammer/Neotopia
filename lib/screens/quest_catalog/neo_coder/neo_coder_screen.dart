@@ -33,7 +33,6 @@ class _NeoCoderScreenState extends State<NeoCoderScreen> with TickerProviderStat
   List<DailyTask> _dailyTasks = [];
   final Map<String, bool> _taskCompletionStatus = {};
   final DatabaseReference _database = FirebaseDatabase.instance.ref();
-  final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
   @override
   void initState() {
@@ -167,64 +166,64 @@ class _NeoCoderScreenState extends State<NeoCoderScreen> with TickerProviderStat
   }
 
   void _showTaskNotification(String taskId) {
-    if (!mounted) {
-      print('Widget not mounted, skipping notification for $taskId');
-      return;
-    }
+    if (!mounted) return;
+
     final task = _dailyTasks.firstWhere(
           (t) => t.id == taskId,
       orElse: () => DailyTask(id: '', category: '', title: '', description: '', goal: '', rewardCoins: 0),
     );
-    if (task.id.isEmpty) {
-      print('No task found for $taskId, skipping notification');
-      return;
-    }
-    print('Attempting to show SnackBar for $taskId with title: ${task.title}');
+
+    if (task.id.isEmpty) return;
+
+    // Очищаем предыдущие уведомления
     ScaffoldMessenger.of(context).clearSnackBars();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.check_circle, color: Colors.white, size: 24),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
+
+    // Показываем новое уведомление
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: _buildNotificationContent(task),
+          backgroundColor: const Color(0xFF2E0352),
+          duration: const Duration(seconds: 4),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          margin: const EdgeInsets.all(16),
+        ),
+      );
+    });
+  }
+
+  Widget _buildNotificationContent(DailyTask task) {
+    return Row(
+      children: [
+        const Icon(Icons.check_circle, color: Colors.white, size: 24),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Задание выполнено!', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              Text(task.title, style: const TextStyle(color: Colors.white)),
+              Row(
                 children: [
-                  const Text(
-                    'Задание выполнено!',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                  ),
-                  Text(task.title, style: const TextStyle(color: Colors.white)),
-                  Row(
-                    children: [
-                      const Text('Награда: ', style: TextStyle(color: Colors.white)),
-                      Text('${task.rewardCoins}', style: const TextStyle(color: Colors.amber)),
-                      const SizedBox(width: 4),
-                      Image.asset(
-                        'assets/images/neocoins.png',
-                        width: 20,
-                        height: 20,
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) {
-                          print('Error loading neocoins.png: $error');
-                          return const Icon(Icons.error, color: Colors.red, size: 20);
-                        },
-                      ),
-                    ],
+                  const Text('Награда: ', style: TextStyle(color: Colors.white)),
+                  Text('${task.rewardCoins}', style: const TextStyle(color: Colors.amber)),
+                  const SizedBox(width: 4),
+                  Image.asset(
+                    'assets/images/neocoins.png',
+                    width: 20,
+                    height: 20,
+                    errorBuilder: (_, __, ___) => const Icon(Icons.error, color: Colors.red, size: 20),
                   ),
                 ],
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-        backgroundColor: const Color(0xFF2E0352),
-        duration: const Duration(seconds: 7),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: const EdgeInsets.all(16),
-      ),
+      ],
     );
   }
 
@@ -271,16 +270,24 @@ class _NeoCoderScreenState extends State<NeoCoderScreen> with TickerProviderStat
       setState(() {
         hasChecked = true;
         errorMessage = 'Ошибка в коде:\n- ${errors.join('\n- ')}';
-        _scaffoldMessengerKey.currentState?.showSnackBar(
-          SnackBar(
-            content: Text(errorMessage, style: const TextStyle(color: Colors.white)),
-            backgroundColor: const Color(0xFF2E0352),
-            duration: const Duration(seconds: 3),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            margin: const EdgeInsets.all(16),
-          ),
-        );
+      });
+
+      // Показываем SnackBar через текущий контекст
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context)
+            ..clearSnackBars()
+            ..showSnackBar(
+              SnackBar(
+                content: Text(errorMessage, style: const TextStyle(color: Colors.white)),
+                backgroundColor: const Color(0xFF2E0352),
+                duration: const Duration(seconds: 3),
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                margin: const EdgeInsets.all(16),
+              ),
+            );
+        }
       });
       return;
     }
@@ -341,43 +348,50 @@ class _NeoCoderScreenState extends State<NeoCoderScreen> with TickerProviderStat
 
       if (isCorrect) {
         _animationController.forward().then((_) {
-          setState(() {
-            isGameOver = true;
-            // Показываем уведомление после рендера NeoCoderResult
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              // Проверяем, не было ли уже выполнено coder_rotation
-              if (!_taskCompletionStatus.containsKey('coder_rotation') || !_taskCompletionStatus['coder_rotation']!) {
-                _checkTask('coder_rotation').then((success) {
-                  if (success && mounted) {
-                    print('Triggering notification for coder_rotation');
-                    _showTaskNotification('coder_rotation');
-                    _taskCompletionStatus['coder_rotation'] = true;
-                  }
-                });
-              } else {
-                print('coder_rotation already completed, skipping');
+          if (!mounted) return;
+
+          setState(() => isGameOver = true);
+
+          if (!_taskCompletionStatus.containsKey('coder_rotation') || !_taskCompletionStatus['coder_rotation']!) {
+            _checkTask('coder_rotation').then((success) {
+              if (success && mounted) {
+                _showTaskNotification('coder_rotation');
+                _taskCompletionStatus['coder_rotation'] = true;
               }
             });
-          });
-          context.read<GameCubit>().addCoins(coinsForCompletion);
+          }
         });
+        context.read<GameCubit>().addCoins(coinsForCompletion);
       } else {
         _animationController.forward().then((_) {
-          _animationController.reset();
-          _errorController.repeat(reverse: true, period: const Duration(milliseconds: 300)).then((_) {
-            _errorController.reset();
+          if (!mounted) return;
+
+          setState(() {
+            _animationController.reset();
+            errorMessage = 'Ошибка! Анимация должна вращать маскота ровно на 360° (используй 2 * 3.14159 или ~6.28318) и увеличивать в 1.5 раза. Попробуй снова!';
           });
-          errorMessage = 'Ошибка! Анимация должна вращать маскота ровно на 360° (используй 2 * 3.14159 или ~6.28318) и увеличивать в 1.5 раза. Попробуй снова!';
-          _scaffoldMessengerKey.currentState?.showSnackBar(
-            SnackBar(
-              content: Text(errorMessage, style: const TextStyle(color: Colors.white)),
-              backgroundColor: const Color(0xFF2E0352),
-              duration: const Duration(seconds: 3),
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              margin: const EdgeInsets.all(16),
-            ),
-          );
+
+          _errorController.repeat(reverse: true, period: const Duration(milliseconds: 300)).then((_) {
+            if (mounted) _errorController.reset();
+          });
+
+          // Показываем SnackBar через текущий контекст
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              ScaffoldMessenger.of(context)
+                ..clearSnackBars()
+                ..showSnackBar(
+                  SnackBar(
+                    content: Text(errorMessage, style: const TextStyle(color: Colors.white)),
+                    backgroundColor: const Color(0xFF2E0352),
+                    duration: const Duration(seconds: 3),
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    margin: const EdgeInsets.all(16),
+                  ),
+                );
+            }
+          });
         });
       }
     });
@@ -398,12 +412,13 @@ class _NeoCoderScreenState extends State<NeoCoderScreen> with TickerProviderStat
       return NeoCoderResult(
         coinsEarned: coinsForCompletion,
         onRestart: _restartGame,
-        onBack: () => Navigator.pop(context),
+        onBack: () {
+          Navigator.pop(context); // Просто закрываем экран без дополнительных действий
+        },
       );
     }
 
     return Scaffold(
-      key: _scaffoldMessengerKey,
       appBar: AppBar(
         title: const Text('Нео-Кодер: Анимируй Маскота!'),
         backgroundColor: const Color(0xFF2E0352),
